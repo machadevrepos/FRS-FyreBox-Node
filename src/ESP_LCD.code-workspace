@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "Blink_Led",
+			"path": "../../../../PlatformIO/Projects/Blink_Led"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"memory": "cpp",
+			"random": "cpp",
+			"optional": "cpp"
+		}
+	}
+}
