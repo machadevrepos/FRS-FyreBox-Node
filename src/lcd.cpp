@@ -4760,7 +4760,7 @@ int FirmwareVersionCheck() {
         payload.trim();
         Serial.print("File Version: ");
         Serial.println(payload);
-        if (payload.toFloat() > FirmwareVer.toFloat()) {
+        if (payload.toFloat() < FirmwareVer.toFloat()) {
             Serial.printf("\nDevice already on latest firmware version:%s\n", FirmwareVer);
             return 0;
         }
