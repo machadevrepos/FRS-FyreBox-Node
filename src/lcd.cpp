@@ -14,53 +14,23 @@
 RTC_DS3231 rtc;
 Preferences preferences;
 
-// RH_E32 driver(&Serial2, MOPIN, M1PIN, AUXPIN); //M0, M1, AUX
 RH_E32 driver(&LoRaSerial, MOPIN, M1PIN, AUXPIN);
-RHMesh mesh(driver, NODEID); // Node ID
+RHMesh mesh(driver, NODEID); // Node ID 
 
 std::vector<NodeStatus> nodeStatuses;
+
+// CRGBArray<NUM_LEDS_RGB1> BigHexagonAndAlarmCallPointLEDs;
+CRGBArray<NUM_LEDS_RGB2> SmallHexagonsAndFireLEDs;
+CRGBArray<NUM_LEDS_RGB3> LeftArrowLEDs;
+CRGBArray<NUM_LEDS_RGB4> RightArrowLEDs;
+CRGBArray<NUM_LEDS_RGB5> SideLEDs;
 
 Audio audio;
 AudioBuffer InBuff;
 SemaphoreHandle_t audioSemaphore;
 
-// 24 X LEDs for each of the sides - so 24x 2 (each side). Always on in white. Activation, flashing red. (48 total)
-
-// 3  X LEDS for the big hexagon (always on in white) always on (3 total)
-
-// 12 X LEDS small hexagon (always on, always white) activation flashing red, same as the sides. (12 total)
-
-// 3 X LEDs per arrow (6 in total for both arrows) white normally then on activation the directional arrow turns red and runs (6 total)
-
-// 18 X LEDs for the alarm call point sign - always white, always on (18 total)
-
-// 24 X LEDs for the FIRE sign (always RED, always on. flashing red on activation) (24 total)
-
-// LED configuration
-#define DATA_PIN_RGB1 21
-#define DATA_PIN_RGB2 26
-#define DATA_PIN_RGB3 47
-#define DATA_PIN_RGB4 33
-#define DATA_PIN_RGB5 34
-#define DATA_PIN_RGB6 20
-
-#define NUM_LEDS_RGB6 48 // Left and Right side LEDs
-#define NUM_LEDS_RGB5 3  // Right arrow
-#define NUM_LEDS_RGB4 3  // Left arrow
-#define NUM_LEDS_RGB3 36 // 5 Hexagons and FIRE sign
-#define NUM_LEDS_RGB2 21 // Big hexagon and Alarm Call point
-
-#define RGB_LED_BRIGHTNESS 10
-
-CRGBArray<NUM_LEDS_RGB6> SideLEDs;
-CRGBArray<NUM_LEDS_RGB5> RightArrowLEDs;
-CRGBArray<NUM_LEDS_RGB4> LeftArrowLEDs;
-CRGBArray<NUM_LEDS_RGB3> SmallHexagonsAndFireLEDs;
-CRGBArray<NUM_LEDS_RGB2> BigHexagonAndAlarmCallPointLEDs;
-
 // Dummy Function to Read Data from Lcd
-void readData()
-{
+void readData() { // Not used
     byte open[] = {90, 165, 0x04, 0x83, 0x00, 0x14, 0x01};
     Serial1.write(open, sizeof(open));
     delay(5);
@@ -79,28 +49,25 @@ void readData()
 }
 
 // Check Lcd Version
-void checkVersion()
-{
+void checkVersion() { // Not used
     byte version[] = {0x5A, 0xA5, 0x04, 0x83, 0x00, 0x0F, 0x01};
     Serial1.write(version, sizeof(version));
 }
 
 // Write Dataframe to Lcd at Specified VP Addresses
-void sendReadCommand(uint16_t address, uint16_t data_length)
-{
+void sendReadCommand(uint16_t address, uint16_t data_length) {
     byte frames[] = {0x5A, 0xA5, 0x04, 0x83, (byte)(address >> 8), (byte)(address & 0xFF), (byte)data_length};
     Serial1.write(frames, sizeof(frames));
 }
 
-void sendWriteCommand(uint16_t address, byte data)
-{
+// Used to reset specific VP Address
+void sendWriteCommand(uint16_t address, byte data) {
     byte frame[] = {0x5A, 0xA5, 0x04, 0x82, (byte)(address >> 8), (byte)(address & 0xFF), data};
     Serial1.write(frame, sizeof(frame));
 }
 
 // Reset vp address
-void resetVP(uint16_t address)
-{
+void resetVP(uint16_t address) {
     byte frame[] = {0x5A, 0xA5, 0x2B, 0x82, (byte)(address >> 8), (byte)(address & 0xFF)};
     Serial1.write(frame, sizeof(frame));
     // for (int i = 0; i < sizeof(frame); i++)
@@ -118,13 +85,11 @@ void resetVP(uint16_t address)
 }
 
 // Read Data in Chunks from Display
-String readDataFromDisplay(uint16_t address, uint16_t totalLength, uint16_t maxChunk)
-{
+String readDataFromDisplay(uint16_t address, uint16_t totalLength, uint16_t maxChunk) { // Not used
     const uint16_t maxChunkSize = maxChunk; // Maximum read length
     String completeData = "";
 
-    while (totalLength > 0)
-    {
+    while (totalLength > 0) {
         uint16_t chunkSize = (totalLength > maxChunkSize) ? maxChunkSize : totalLength;
         sendReadCommand(address, chunkSize);
 
@@ -140,38 +105,32 @@ String readDataFromDisplay(uint16_t address, uint16_t totalLength, uint16_t maxC
     return completeData;
 }
 
-bool readCheckboxState()
-{
+bool readCheckboxState() { // Not used
     sendReadCommand(checkboxVP, 0x01);
     delay(100); // Delay for the display to respond
 
-    if (Serial1.available())
-    {
+    if (Serial1.available()) {
         int available_bytes = Serial1.available();
         byte response[available_bytes];
         Serial1.readBytes(response, available_bytes);
 
         // Check if the response is for the correct VP address and extract the state
-        if (response[3] == 0x83 && response[4] == (byte)(checkboxVP >> 8) && response[5] == (byte)(checkboxVP & 0xFF))
-        {
+        if (response[3] == 0x83 && response[4] == (byte)(checkboxVP >> 8) && response[5] == (byte)(checkboxVP & 0xFF)) {
             return response[7] == 1;
         }
     }
     return false;
 }
 
-String extractDataBetweenMarkers(String input, String startMarker, String endMarker)
-{
+String extractDataBetweenMarkers(String input, String startMarker, String endMarker) { // Not used
     int startPos = input.indexOf(startMarker);
-    if (startPos == -1)
-    {
+    if (startPos == -1) {
         // Start marker not found in the input
         return "";
     }
 
     int endPos = input.indexOf(endMarker, startPos + startMarker.length());
-    if (endPos == -1)
-    {
+    if (endPos == -1) {
         // End marker not found in the input after the start marker
         return "";
     }
@@ -182,8 +141,7 @@ String extractDataBetweenMarkers(String input, String startMarker, String endMar
     return extractedData;
 }
 
-String extractDataBeforeMarker(String input, String startMarker)
-{
+String extractDataBeforeMarker(String input, String startMarker) {
     int startPos = input.indexOf(startMarker);
     if (startPos == -1)
     {
@@ -197,52 +155,43 @@ String extractDataBeforeMarker(String input, String startMarker)
     return extractedData;
 }
 
-String tempreadResponse()
-{
+String tempreadResponse() {
     String completeData = "";
-    while (Serial1.available())
-    {
+    while (Serial1.available()) {
         char a = Serial1.read();
         completeData += String(a, HEX);
     }
     return completeData;
 }
 
-bool containsPattern(const String &str, const String &pattern)
-{
+bool containsPattern(const String &str, const String &pattern) {
     return str.indexOf(pattern) != -1;
 }
 
-String extractDataBetweenPatterns(const String &input, const String &startPattern, const String &endPattern)
-{
+String extractDataBetweenPatterns(const String &input, const String &startPattern, const String &endPattern) {
     int start = input.indexOf(startPattern);
-    if (start == -1)
-    {
+    if (start == -1) {
         return ""; // Start pattern not found
     }
     start += startPattern.length(); // Move to the end of the start pattern
 
     int end = input.indexOf(endPattern, start);
-    if (end == -1)
-    {
+    if (end == -1) {
         return ""; // End pattern not found
     }
 
     return input.substring(start, end); // Extract the data between the patterns
 }
 
-String dummyReadResponse()
-{
+String dummyReadResponse() {
     String completeData = "";
     int byteCount = 0;
 
-    while (Serial1.available())
-    {
+    while (Serial1.available()) {
         // Serial.print(Serial1.read(),HEX);
         char a = Serial1.read();
         // completeData += String(a, HEX);
-        if (byteCount > 6)
-        {
+        if (byteCount > 6) {
             //    String hexValue = String(a, HEX);
             //    if (hexValue != "00")
             //    {
@@ -256,11 +205,9 @@ String dummyReadResponse()
     return completeData;
 }
 
-String extractVpAddress(const String &inputHex, const String &vpAddressPattern)
-{
+String extractVpAddress(const String &inputHex, const String &vpAddressPattern) { // Not used
     int startPos = inputHex.indexOf(vpAddressPattern);
-    if (startPos == -1)
-    {
+    if (startPos == -1) {
         // VP address pattern not found in the input
         return "";
     }
@@ -270,11 +217,9 @@ String extractVpAddress(const String &inputHex, const String &vpAddressPattern)
     return extractedVpAddress;
 }
 
-String removeFirst6Bytes(const String &input)
-{
+String removeFirst6Bytes(const String &input) {
     // Check if the string has at least 12 characters (6 bytes)
-    if (input.length() < 12)
-    {
+    if (input.length() < 12) {
         return ""; // Return an empty string if there are not enough characters
     }
 
@@ -282,11 +227,9 @@ String removeFirst6Bytes(const String &input)
     return input.substring(12);
 }
 
-String remove13Characters(const String &input)
-{
+String remove13Characters(const String &input) {
     // Check if the string has at least 12 characters (6 bytes)
-    if (input.length() < 13)
-    {
+    if (input.length() < 13) {
         return ""; // Return an empty string if there are not enough characters
     }
 
@@ -294,11 +237,9 @@ String remove13Characters(const String &input)
     return input.substring(13);
 }
 
-String removeFirst7Bytes(const String &input)
-{
+String removeFirst7Bytes(const String &input) {
     // Check if the string has at least 12 characters (6 bytes)
-    if (input.length() < 14)
-    {
+    if (input.length() < 14) {
         return ""; // Return an empty string if there are not enough characters
     }
 
@@ -306,24 +247,20 @@ String removeFirst7Bytes(const String &input)
     return input.substring(14);
 }
 
-String processFourthAndFifthBytes(const String &checkData)
-{
+String processFourthAndFifthBytes(const String &checkData) {
     String vpAddress = extractDataBetweenPatterns(checkData, "a5", "83");
     int start_index;
     int end_index;
     // Ensure the string is long enough (at least 11 characters for 5.5 bytes)
-    if (checkData.length() < 11)
-    {
+    if (checkData.length() < 11) {
         return ""; // Not enough data to process
     }
 
-    if (vpAddress.length() == 1)
-    {
+    if (vpAddress.length() == 1) {
         start_index = 7;
         end_index = 11;
-    }
-    else
-    {
+    } 
+    else {
         start_index = 8;
         end_index = 12;
     }
@@ -336,19 +273,15 @@ String processFourthAndFifthBytes(const String &checkData)
     return fourthAndFifthBytes; // Return the processed data
 }
 
-void startCheckingPassword(uint16_t passwordDisplay, uint16_t passwordIcon, const String &checkData)
-{
+void startCheckingPassword(uint16_t passwordDisplay, uint16_t passwordIcon, const String &checkData) {
     Serial.println("Data from password field: " + checkData);
     String dataLength = extractDataBetweenPatterns(checkData, "a5", "83");
     String removerHeaders;
 
-    if (dataLength.length() == 1)
-    {
+    if (dataLength.length() == 1) {
         removerHeaders = removeFirst6Bytes(checkData);
     }
-
-    else
-    {
+    else {
         removerHeaders = remove13Characters(checkData);
     }
 
@@ -363,14 +296,12 @@ void startCheckingPassword(uint16_t passwordDisplay, uint16_t passwordIcon, cons
     delay(100);
     String iconRead = tempreadResponse();
     Serial.println("Read Icon :" + iconRead);
-    if (checkLast3DigitsMatch(iconRead, showPassword))
-    {
+    if (checkLast3DigitsMatch(iconRead, showPassword)) {
         // Serial.println("Show Password");
         delay(100);
         writeString(passwordDisplay, hexPassword);
     }
-    else if (checkLast3DigitsMatch(iconRead, hidePassword))
-    {
+    else if (checkLast3DigitsMatch(iconRead, hidePassword)) {
         // Serial.println("Hide Password");
         String hiddenPassword = "";
         for (int i = 0; i < password.length(); i++)
@@ -384,8 +315,7 @@ void startCheckingPassword(uint16_t passwordDisplay, uint16_t passwordIcon, cons
     }
 }
 
-String processPasswordDisplay(uint16_t readPassword, uint16_t passwordDisplay, uint16_t passwordIcon)
-{
+String processPasswordDisplay(uint16_t readPassword, uint16_t passwordDisplay, uint16_t passwordIcon) {
     // Read password
     delay(100);
     sendReadCommand(readPassword, 0x28);
@@ -416,17 +346,14 @@ String processPasswordDisplay(uint16_t readPassword, uint16_t passwordDisplay, u
     String iconRead = tempreadResponse();
     Serial.println("Read Icon Again :" + iconRead);
 
-    if (checkLast3DigitsMatch(iconRead, showPassword))
-    {
+    if (checkLast3DigitsMatch(iconRead, showPassword)) {
         Serial.println("Show Password");
         writeString(passwordDisplay, hexPassword);
     }
-    else if (checkLast3DigitsMatch(iconRead, hidePassword))
-    {
+    else if (checkLast3DigitsMatch(iconRead, hidePassword)) {
         Serial.println("Hide Password");
         String hiddenPassword = "";
-        for (int i = 0; i < password.length(); i++)
-        {
+        for (int i = 0; i < password.length(); i++) {
             hiddenPassword += '*';
         }
         // Serial.println("Hidden Password: " + hiddenPassword);
@@ -438,12 +365,10 @@ String processPasswordDisplay(uint16_t readPassword, uint16_t passwordDisplay, u
 }
 
 // Read the Response from LCD
-String readText()
-{
+String readText() { // Not used
     String completeData = "";
 
-    while (Serial1.available())
-    {
+    while (Serial1.available()) {
         char a = Serial1.read();
         completeData += String(a);
     }
@@ -452,25 +377,21 @@ String readText()
 }
 
 // Remove the zeros and Converted to String
-String hexToStringRemovedZeros(const String &hex)
-{
+String hexToStringRemovedZeros(const String &hex) { // Not used
     String ascii = "";
 
     // Skip leading zeros
     unsigned int start = 0;
-    while (start < hex.length() && hex.substring(start, start + 2) == "00")
-    {
+    while (start < hex.length() && hex.substring(start, start + 2) == "00") {
         start += 2;
     }
 
     // Process the string until trailing zeros
-    for (unsigned int i = start; i < hex.length(); i += 2)
-    {
+    for (unsigned int i = start; i < hex.length(); i += 2) {
         String part = hex.substring(i, i + 2);
 
         // Break if trailing zeros start
-        if (part == "00")
-        {
+        if (part == "00") {
             break;
         }
 
@@ -482,11 +403,9 @@ String hexToStringRemovedZeros(const String &hex)
 }
 
 // Convert Hexadecimal String to Text
-String hexToString(const String &hex)
-{
+String hexToString(const String &hex) {
     String ascii = "";
-    for (unsigned int i = 0; i < hex.length(); i += 2)
-    {
+    for (unsigned int i = 0; i < hex.length(); i += 2) {
         String part = hex.substring(i, i + 2);
         char ch = (char)strtol(part.c_str(), NULL, 16);
         ascii += ch;
@@ -495,11 +414,9 @@ String hexToString(const String &hex)
 }
 
 // Check last four digits: return true if condition meet else false
-bool checkLastFourDigitsMatch(const String &inputString, const String &targetDigits)
-{
+bool checkLastFourDigitsMatch(const String &inputString, const String &targetDigits) {
     // Ensure the input string is at least 4 characters long
-    if (inputString.length() < 4)
-    {
+    if (inputString.length() < 4) {
         return false;
     }
 
@@ -510,11 +427,9 @@ bool checkLastFourDigitsMatch(const String &inputString, const String &targetDig
     return lastFourDigits.equals(targetDigits);
 }
 
-bool checkLast3DigitsMatch(const String &inputString, const String &targetDigits)
-{
+bool checkLast3DigitsMatch(const String &inputString, const String &targetDigits) {
     // Ensure the input string is at least 3 characters long
-    if (inputString.length() < 3)
-    {
+    if (inputString.length() < 3) {
         return false;
     }
 
@@ -525,33 +440,29 @@ bool checkLast3DigitsMatch(const String &inputString, const String &targetDigits
     return lastThreeDigits.equals(targetDigits);
 }
 
-String readResponse()
-{
+String readResponse() {
     const int maxResponseLength = 8;
     char responseBytes[maxResponseLength]; // Array to store the bytes
     int availableBytes = Serial1.available();
 
     // Check if available bytes are less than 5, then keep reading
-    while (availableBytes < 5)
-    {
+    while (availableBytes < 5) {
         delay(100);
         availableBytes = Serial1.available();
     }
 
     // Read bytes from Serial1, up to the maximum response length
     int bytesRead = 0;
-    while (bytesRead < maxResponseLength && Serial1.available())
-    {
+    while (bytesRead < maxResponseLength && Serial1.available()) {
         responseBytes[bytesRead] = Serial1.read();
         bytesRead++;
     }
 
     // Convert the byte array to a hexadecimal string
     String dataStr = "";
-    for (int i = 0; i < bytesRead; i++)
-    {
-        if (responseBytes[i] < 0x10)
-        { // Add leading zero for single digit hex values
+    for (int i = 0; i < bytesRead; i++) {
+        if (responseBytes[i] < 0x10) {
+            // Add leading zero for single digit hex values
             dataStr += "0";
         }
         dataStr += String(responseBytes[i], HEX);
@@ -565,8 +476,7 @@ String readResponse()
 }
 
 // Login Credentials for both Client and Admin Panel
-Credentials retrieveCredentials(uint16_t ssidCommand, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon)
-{
+Credentials retrieveCredentials(uint16_t ssidCommand, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon) {
     // Read SSID
     Serial.println("In retrieveCredentials");
     Credentials creds;
@@ -586,8 +496,7 @@ Credentials retrieveCredentials(uint16_t ssidCommand, uint16_t passwordCommand, 
 }
 
 // Login Credentials for Client Panel
-void processClientLogin(uint16_t username, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon)
-{
+void processClientLogin(uint16_t username, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon) {
     // Read Username
     Serial.println("In processClientLogin");
 
@@ -598,8 +507,7 @@ void processClientLogin(uint16_t username, uint16_t passwordCommand, uint16_t pa
     String extractedusername = extractDataBeforeMarker(usernameData, "ffff");
     String saveusername = hexToString(extractedusername);
 
-    if (saveusername != "")
-    {
+    if (saveusername != "") {
         preferences.putString("client_username", saveusername); // Save Username
 
         // Read Password
@@ -608,7 +516,6 @@ void processClientLogin(uint16_t username, uint16_t passwordCommand, uint16_t pa
         preferences.putString("client_password", temppassword); // Save Password
 
         // Only for debugging
-
         String Username = preferences.getString("client_username", "");
         Serial.println("Username: " + Username);
 
@@ -619,8 +526,7 @@ void processClientLogin(uint16_t username, uint16_t passwordCommand, uint16_t pa
 }
 
 // Login Credentials for Admin Panel
-void processAdminLogin(uint16_t username, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon)
-{
+void processAdminLogin(uint16_t username, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon) {
     // Read username
     Serial.println("In processAdmin_Login");
 
@@ -631,8 +537,7 @@ void processAdminLogin(uint16_t username, uint16_t passwordCommand, uint16_t pas
     String extractedusername = extractDataBeforeMarker(usernameData, "ffff");
     String saveusername = hexToString(extractedusername);
 
-    if (saveusername != "")
-    {
+    if (saveusername != "") {
         preferences.putString("admin_username", saveusername); // Save username
 
         // Read Password
@@ -642,17 +547,16 @@ void processAdminLogin(uint16_t username, uint16_t passwordCommand, uint16_t pas
 
         // Only for debugging
 
-        // String Username = preferences.getString("admin_username", "");
-        // Serial.println("Username: " + Username);
+        String Username = preferences.getString("admin_username", "");
+        Serial.println("Username: " + Username);
 
-        // String pass = preferences.getString("admin_password", "");
-        // Serial.println("PASSWORD: " + pass);
+        String pass = preferences.getString("admin_password", "");
+        Serial.println("PASSWORD: " + pass);
     }
 }
 
 // Wi-Fi Credentials
-void processWiFiCredentials(uint16_t ssid, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon)
-{
+void processWiFiCredentials(uint16_t ssid, uint16_t passwordCommand, uint16_t passwordDisplay, uint16_t passwordIcon) {
     // Read ssid
     Serial.println("In processWiFiCredentials");
 
@@ -663,8 +567,6 @@ void processWiFiCredentials(uint16_t ssid, uint16_t passwordCommand, uint16_t pa
     String extractedssidData = extractDataBeforeMarker(ssidData, "ffff");
     String savessidData = hexToString(extractedssidData);
 
-    // if(savessidData != "")
-    // {
     preferences.putString("internetSSID", savessidData); // Save SSID
 
     // Read Password
@@ -672,18 +574,15 @@ void processWiFiCredentials(uint16_t ssid, uint16_t passwordCommand, uint16_t pa
 
     preferences.putString("internetPass", temppassword); // Save Password
 
-    // Only for debugging
-
+    // Only for debugging 
     // String ssid = preferences.getString("admin_username", "");
     // Serial.println("SSID: " + ssid);
 
     // String pass = preferences.getString("admin_password", "");
     // Serial.println("PASSWORD: " + pass);
-    // }
 }
 
-String readOneData(uint16_t ssidCommand)
-{
+String readOneData(uint16_t ssidCommand) {
     sendReadCommand(ssidCommand, 0x28);
     delay(100);
     String Data = dummyReadResponse();
@@ -694,41 +593,35 @@ String readOneData(uint16_t ssidCommand)
     return readData;
 }
 
-void performLoginCheck(bool &clientLogin, bool &adminLogin)
-{
+void performLoginCheck(bool &clientLogin, bool &adminLogin) { // Not used
     sendReadCommand(LOGIN, 0x01);
     delay(100);
     String loginData = tempreadResponse();
 
-    if (checkLastFourDigitsMatch(loginData, clientPanelDigits))
-    {
+    if (checkLastFourDigitsMatch(loginData, clientPanelDigits)) {
         Serial.println("Client Panel Login successful!");
         clientLogin = true;
         adminLogin = false;
     }
-    else if (checkLastFourDigitsMatch(loginData, adminPanelDigits))
-    {
+    else if (checkLastFourDigitsMatch(loginData, adminPanelDigits)) {
         Serial.println("Admin Panel Login successful!");
         adminLogin = true;
         clientLogin = false;
     }
-    else
-    {
+    else {
         Serial.println("Login failed. Last 4 digits do not match.");
         clientLogin = false;
         adminLogin = false;
     }
 }
 
-void readPage()
-{
+void readPage() { // Not used
     byte readpage[] = {0x5A, 0xA5, 0x04, 0x83, 0x00, 0x14, 0x01};
     Serial1.write(readpage, sizeof(readpage));
 }
 
 // Page Switching
-void pageSwitch(byte pageNo)
-{
+void pageSwitch(byte pageNo) {
     // Frame array
     byte open[] = {0x5A, 0xA5, 0x07, 0x82, 0x00, 0x84, 0x5A, 0x01, 0x00, pageNo};
     Serial1.write(open, sizeof(open));
@@ -741,59 +634,39 @@ void pageSwitch(byte pageNo)
     delay(500);
 }
 
-void DisplayDeactivateIcon()
-{
-    // 0x5A, 0xA5 Frame header
-    // 0x0F Data length
-    // 0x82 write instruction
-    // 0x5440 VP
-    // 0x30 icon library number 48
-    // 0x07 icon write instruction
-    // 0x0001 display an icon
-    // the starting display coordinates of upper left corner
-    // 0x001 icon no 1 in icon 48 lib
-    // ff 00 terminator
-    // byte iconCommand[] = {0x5A, 0xA5, 0x0F, 0x82, 0x54, 0x40, 0x30, 0x48, 0x00, 0x01, 0x01, 0x68, 0x01, 0x68, 0x00, 0x01, 0xFF, 0x00};
-    byte iconCommand[] = {0x5A, 0xA5, 0x0F, 0x82, 0x62, 0x18, 0x32, 0x48, 0x00, 0x01, 0x01, 0x53, 0x01, 0xCA, 0x00, 0x00, 0xFF, 0x00};
-
-    Serial1.write(iconCommand, sizeof(iconCommand));
-
-    // byte icon[] = {0x5A, 0xA5, 0x0F, 0x82, 0x54, 0x40, 0x30, 0x07, 0x00, 0x01, 0x01, 0x68, 0x01, 0x68, 0x00, 0x01, 0xFF, 0x00};
-    // Serial1.write(icon, sizeof(icon));
-    // for (int i = 0; i < sizeof(icon); i++)
-    // {
-    //     Serial.print("Icon Byte ");
+// Icon Switching
+void Display_AC_DEAC_Icon(byte iconNo) { // 00 or 01
+    // Frame array
+    byte open[] = {0x5A, 0xA5, 0x05, 0x82, 0x62, 0x18, 0x00, iconNo};
+    Serial1.write(open, sizeof(open));
+    //    for (int i = 0; i < sizeof(open); i++) {
+    //     Serial.print("Open Byte ");
     //     Serial.print(i);
     //     Serial.print(": ");
-    //     Serial.println(icon[i], HEX);
+    //     Serial.println(open[i], HEX);
     // }
     delay(500);
 }
 
 // Lcd Reset
-void systemReset()
-{
+void systemReset() { // Not used
     byte reset[] = {0x5A, 0xA5, 0x07, 0x82, 0x00, 0x04, 0x55, 0xAA, 0x5A, 0xA5};
     Serial1.write(reset, sizeof(reset));
 }
 
 // Compare String
-bool compareCredentials(String ssid, String password)
-{
+bool compareCredentials(String ssid, String password) {
     return ssid == predefinedusername && password == predefinedPassword;
 }
 
 // Compare Internet
-bool compareInternetCredentials(String ssid, String password)
-{
+bool compareInternetCredentials(String ssid, String password) { // Not used
     return ssid == predefinedInternetSSID && password == predefinedInternetPassword;
 }
 
-String toHexString(const String &data)
-{
+String toHexString(const String &data) {
     String hexString = "";
-    for (char c : data)
-    {
+    for (char c : data) {
         char hex[3];
         sprintf(hex, "%02X", c); // Convert each character to a two-digit hexadecimal
         hexString += hex;
@@ -801,15 +674,13 @@ String toHexString(const String &data)
     return hexString;
 }
 
-void sendDataToLcd(uint16_t vpAddress, const String &data)
-{
+void sendDataToLcd(uint16_t vpAddress, const String &data) { // Not used
     String hexData = toHexString(data);
     writeString(vpAddress, hexData);
 }
 
 // Function to convert two hexadecimal characters to one byte
-byte hexCharToByte(char c)
-{
+byte hexCharToByte(char c) {
     if (c >= '0' && c <= '9')
         return c - '0';
     if (c >= 'A' && c <= 'F')
@@ -819,25 +690,21 @@ byte hexCharToByte(char c)
     return 0;
 }
 
-byte hexStringToByte(const String &hex)
-{
+byte hexStringToByte(const String &hex) { // Not used
     return (hexCharToByte(hex.charAt(0)) << 4) | hexCharToByte(hex.charAt(1));
 }
 
 // Helper function to convert two hexadecimal characters to one byte
-byte hexToByte(const char *hex)
-{
+byte hexToByte(const char *hex) {
     return (byte)strtol(hex, NULL, 16);
 }
 
-void writeString(uint16_t address, const String &hexData)
-{
+void writeString(uint16_t address, const String &hexData) {
     size_t dataLength = hexData.length() / 2; // Each byte is represented by two hex characters
     byte *charData = new byte[dataLength];
 
     // Convert hex string to bytes
-    for (size_t i = 0; i < dataLength; i++)
-    {
+    for (size_t i = 0; i < dataLength; i++) {
         charData[i] = hexToByte(hexData.substring(i * 2, i * 2 + 2).c_str());
     }
 
@@ -867,8 +734,7 @@ void writeString(uint16_t address, const String &hexData)
     delay(100);
 }
 
-String ReturnJson(String url, DynamicJsonDocument &doc)
-{
+String ReturnJson(String url, DynamicJsonDocument &doc) {
     String jsonResult = ""; // String to hold the JSON result
 
     HTTPClient http;
@@ -878,8 +744,7 @@ String ReturnJson(String url, DynamicJsonDocument &doc)
     int httpCode = http.GET();
     Serial.println(httpCode);
 
-    if (httpCode > 0)
-    { // Check for the returning code
+    if (httpCode > 0) { // Check for the returning code
         String payload = http.getString();
         Serial.println(httpCode);
         Serial.println(payload);
@@ -887,8 +752,7 @@ String ReturnJson(String url, DynamicJsonDocument &doc)
         // Parse JSON (optional, if you need to process it)
         DeserializationError error = deserializeJson(doc, payload);
 
-        if (error)
-        {
+        if (error) {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.f_str());
             // return;
@@ -896,8 +760,7 @@ String ReturnJson(String url, DynamicJsonDocument &doc)
 
         jsonResult = payload; // Store the JSON string
     }
-    else
-    {
+    else {
         Serial.println("Error on HTTP request");
         jsonResult = "Error"; // Error indication
     }
@@ -907,8 +770,194 @@ String ReturnJson(String url, DynamicJsonDocument &doc)
     return jsonResult; // Return the JSON string
 }
 
-bool processGPRMC(String gprmcString)
-{
+void sendIconcommand(uint16_t pageVP, byte icon0, byte icon1, byte icon2, byte icon3, byte icon4, byte icon5) {
+    byte iconcommand[] = {0x5A, 0xA5, 0x2D, 0x82, (byte)(pageVP >> 8), (byte)(pageVP & 0xFF), 0x30, 0x07, 0x00, 0x06, 0x03, 0x3E, 0x00, 0xC8, 0x00, icon0,
+                          0x03, 0x3E, 0x01, 0x04, 0x00, icon1,
+                          0x03, 0x3E, 0x01, 0x40, 0x00, icon2,
+                          0x03, 0x3E, 0x01, 0x7C, 0x00, icon3,
+                          0x03, 0x3E, 0x01, 0xB8, 0x00, icon4,
+                          0x03, 0x3E, 0x01, 0xF4, 0x00, icon5, 0xFF, 0x00};
+
+    
+    // // Printing on serial monitor to check command
+    // for (int i = 0; i < sizeof(iconcommand); i++)
+    // {
+    //     Serial.print("Icon Byte ");
+    //     Serial.print(i);
+    //     Serial.print(": ");
+    //     Serial.println(iconcommand[i], HEX);
+    // }
+    
+    Serial1.write(iconcommand, sizeof(iconcommand));
+    Serial.println("Show icon command sent");
+    delay(300);
+}
+
+String extractKeycode(const String &input) {
+    // Check if the string has at least 13 characters
+    if (input.length() < 13 || input.length() > 17) {
+        return ""; // Return an empty string
+    }
+
+    // Return the substring starting from the 12th character
+    return input.substring(13);
+}
+
+String extractPageVP(const String &input, const String &vpAddressPattern) {
+    int startPos = input.indexOf(vpAddressPattern);
+    // Check if the string has at least 8 characters
+    if (input.length() < 8 || input.length() > 17 || startPos == -1) {
+        return ""; // Return an empty string
+    }
+
+    // Extract the VP address
+    String extractedVpAddress = input.substring(startPos, startPos + 4);
+    return extractedVpAddress;
+}
+
+String concatinate_checkboxData() { // Not used
+    String checkboxData = controlFunction + speakerActivate + firemanActivateBox + bellRingSystemActivation + batteryHealth + ledLightOnWhite + ledRedActivation + smsReceivedFyreboxActivated + lcdScreenWork + systemActivateWeeklySelfTest + evacuatioDiagram + arrowWorking + permanentPower + illuminatedSignalsWorking + batteriesReplacement + flashSignPanel + unitSecured + faciaComponentSecured + evacuationDiagramUptodate + fyreboxFreeObstructions + LogbookUptodate + fyreboxUnitWipedCleaned + anyDamageBox + anyRustUnit;
+
+    return checkboxData;
+}
+
+bool isActivityDetected() { // Not used
+    // Implement logic to check for activity (e.g., checkData is not empty)
+    if (checkData != "")
+        return true;
+
+    else
+        return false;
+}
+
+String devicesAvailable_DB(String url) {
+    HTTPClient http;
+
+    // Send request
+    http.begin(url);
+    int httpResponseCode = http.GET(); // Use GET method for request
+
+    String STATUS = "";
+
+    if (httpResponseCode > 0) {
+        //    Serial.print("Response code: ");
+        //    Serial.println(httpResponseCode);
+        String response = http.getString();
+
+        // Parse JSON
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, response);
+
+        STATUS = doc["STATUS"].as<String>();
+        //    Serial.println("STATUS: " + STATUS);
+
+        if (STATUS == "ERROR") {
+            String ERROR_DESCRIPTION = doc["ERROR_DESCRIPTION"].as<String>();
+            //      Serial.println("ERROR_DESCRIPTION: " + ERROR_DESCRIPTION);
+
+            //   return ERROR_DESCRIPTION;
+        }
+        else if (STATUS == "SUCCESSFUL") {
+            // return STATUS;
+            //      Serial.print("Response: ");
+            //      Serial.println(response);
+        }
+    }
+    else {
+        //    Serial.print("Error in request, error code: ");
+        //    Serial.println(httpResponseCode);
+
+        //    // Print HTTP error
+        //    Serial.print("HTTP error: ");
+        //    Serial.println(http.errorToString(httpResponseCode));
+    }
+
+    // Free resources
+    http.end();
+
+    return STATUS;
+}
+
+int getWeekNumberByMonth(int day, int month, int year) {
+    // Array to store the number of days in each month
+    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    // Check if the year is a leap year
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+        daysInMonth[2] = 29; // Update February days for leap years
+    }
+
+    // Calculate the day of the week the month starts on
+    int startDayOfMonth = (day + 6) % 7; // Assuming week starts from Sunday (0 for Sunday, 6 for Saturday)
+
+    // Calculate the number of days passed since the beginning of the month
+    int daysPassed = day;
+
+    // Adjust for the start day of the month
+    daysPassed -= startDayOfMonth;
+
+    // Calculate the number of full weeks passed
+    int weeksPassed = daysPassed / 7;
+
+    return weeksPassed;
+}
+
+int getWeekNumberByYear(int day, int month, int year) {
+    // Array to store the number of days in each month
+    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    // Check if the year is a leap year
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+        daysInMonth[2] = 29; // Update February days for leap years
+    }
+
+    // Calculate the number of days passed since the beginning of the year
+    int daysPassed = day;
+    for (int i = 1; i < month; i++) {
+        daysPassed += daysInMonth[i];
+    }
+
+    // Calculate the number of full weeks passed
+    int weeksPassed = daysPassed / 7;
+
+    return weeksPassed;
+}
+
+void checkGPSTask(void *parameter) { // Not used
+    Serial.println("GPS Task started, waiting for signal...");
+
+    while (1) {
+        if (getGPSTime()) {
+            Serial.println("GPS signal acquired.");
+            break; // GPS time obtained, exit the loop
+        }
+        else {
+            Serial.println("Waiting for GPS signal...");
+            delay(1000);
+        }
+    }
+
+    Serial.println("GPS Task completed.");
+    vTaskDelete(xHandlegps); // Delete this task when done
+}
+
+bool getGPSTime() {
+    if (SerialGPS.available()) {
+        Serial.println("GPS Data Availabole");
+        String gpsData = SerialGPS.readStringUntil('\n'); // Read a line of GPS data
+        Serial.print("Raw GPS Data: ");
+        Serial.println(gpsData);
+
+        // Check if the line is a GPRMC string
+        if (gpsData.startsWith("$GPRMC")) {
+            Serial.println("GPRMC");
+            return processGPRMC(gpsData);
+        }
+    }
+    return false;
+}
+
+bool processGPRMC(String gprmcString) {
     Serial.println("INGPRMC");
     int timeIndex = gprmcString.indexOf(',');
     int validityIndex = gprmcString.indexOf(',', timeIndex + 1);
@@ -917,8 +966,7 @@ bool processGPRMC(String gprmcString)
     int longitudeIndex = gprmcString.indexOf(',', northSouthIndex + 1);
     int eastWestIndex = gprmcString.indexOf(',', longitudeIndex + 1);
     int dateIndex = gprmcString.indexOf(',', eastWestIndex + 1);
-    for (int i = 0; i < 2; ++i)
-    { // Skipping two unused fields
+    for (int i = 0; i < 2; ++i) { // Skipping two unused fields
         dateIndex = gprmcString.indexOf(',', dateIndex + 1);
     }
 
@@ -930,8 +978,7 @@ bool processGPRMC(String gprmcString)
     String dateString = gprmcString.substring(dateIndex + 1, gprmcString.indexOf(',', dateIndex + 1));
 
     // Check if data is valid
-    if (validity != "A")
-    {
+    if (validity != "A") {
         return false;
     }
 
@@ -964,222 +1011,8 @@ bool processGPRMC(String gprmcString)
     return true;
 }
 
-void sendIconcommand(uint16_t pageVP, byte icon0, byte icon1, byte icon2, byte icon3, byte icon4, byte icon5)
-{
-    byte iconcommand[] = {0x5A, 0xA5, 0x2D, 0x82, (byte)(pageVP >> 8), (byte)(pageVP & 0xFF), 0x30, 0x07, 0x00, 0x06, 0x03, 0x3E, 0x00, 0xC8, 0x00, icon0,
-                          0x03, 0x3E, 0x01, 0x04, 0x00, icon1,
-                          0x03, 0x3E, 0x01, 0x40, 0x00, icon2,
-                          0x03, 0x3E, 0x01, 0x7C, 0x00, icon3,
-                          0x03, 0x3E, 0x01, 0xB8, 0x00, icon4,
-                          0x03, 0x3E, 0x01, 0xF4, 0x00, icon5, 0xFF, 0x00};
-
-    /*
-    // Printing on serial monitor to check command
-    for (int i = 0; i < sizeof(iconcommand); i++)
-    {
-        Serial.print("Icon Byte ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(iconcommand[i], HEX);
-    }
-    */
-    Serial1.write(iconcommand, sizeof(iconcommand));
-    Serial.println("Show icon command sent");
-    delay(300);
-}
-
-String extractKeycode(const String &input)
-{
-    // Check if the string has at least 13 characters
-    if (input.length() < 13 || input.length() > 17)
-    {
-        return ""; // Return an empty string
-    }
-
-    // Return the substring starting from the 12th character
-    return input.substring(13);
-}
-
-String extractPageVP(const String &input, const String &vpAddressPattern)
-{
-    int startPos = input.indexOf(vpAddressPattern);
-    // Check if the string has at least 8 characters
-    if (input.length() < 8 || input.length() > 17 || startPos == -1)
-    {
-        return ""; // Return an empty string
-    }
-
-    // Extract the VP address
-    String extractedVpAddress = input.substring(startPos, startPos + 4);
-    return extractedVpAddress;
-}
-
-String concatinate_checkboxData()
-{
-    String checkboxData = controlFunction + speakerActivate + firemanActivateBox + bellRingSystemActivation + batteryHealth + ledLightOnWhite + ledRedActivation + smsReceivedFyreboxActivated + lcdScreenWork + systemActivateWeeklySelfTest + evacuatioDiagram + arrowWorking + permanentPower + illuminatedSignalsWorking + batteriesReplacement + flashSignPanel + unitSecured + faciaComponentSecured + evacuationDiagramUptodate + fyreboxFreeObstructions + LogbookUptodate + fyreboxUnitWipedCleaned + anyDamageBox + anyRustUnit;
-
-    return checkboxData;
-}
-
-bool isActivityDetected()
-{
-    // Implement logic to check for activity (e.g., checkData is not empty)
-    if (checkData != "")
-        return true;
-
-    else
-        return false;
-}
-
-String devicesAvailable_DB(String url)
-{
-    HTTPClient http;
-
-    // Send request
-    http.begin(url);
-    int httpResponseCode = http.GET(); // Use GET method for request
-
-    String STATUS = "";
-
-    if (httpResponseCode > 0)
-    {
-        //    Serial.print("Response code: ");
-        //    Serial.println(httpResponseCode);
-        String response = http.getString();
-
-        // Parse JSON
-        DynamicJsonDocument doc(1024);
-        deserializeJson(doc, response);
-
-        STATUS = doc["STATUS"].as<String>();
-        //    Serial.println("STATUS: " + STATUS);
-
-        if (STATUS == "ERROR")
-        {
-            String ERROR_DESCRIPTION = doc["ERROR_DESCRIPTION"].as<String>();
-            //      Serial.println("ERROR_DESCRIPTION: " + ERROR_DESCRIPTION);
-
-            //   return ERROR_DESCRIPTION;
-        }
-        else if (STATUS == "SUCCESSFUL")
-        {
-            // return STATUS;
-            //      Serial.print("Response: ");
-            //      Serial.println(response);
-        }
-    }
-    else
-    {
-        //    Serial.print("Error in request, error code: ");
-        //    Serial.println(httpResponseCode);
-
-        //    // Print HTTP error
-        //    Serial.print("HTTP error: ");
-        //    Serial.println(http.errorToString(httpResponseCode));
-    }
-
-    // Free resources
-    http.end();
-
-    return STATUS;
-}
-
-int getWeekNumberByMonth(int day, int month, int year)
-{
-    // Array to store the number of days in each month
-    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    // Check if the year is a leap year
-    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
-    {
-        daysInMonth[2] = 29; // Update February days for leap years
-    }
-
-    // Calculate the day of the week the month starts on
-    int startDayOfMonth = (day + 6) % 7; // Assuming week starts from Sunday (0 for Sunday, 6 for Saturday)
-
-    // Calculate the number of days passed since the beginning of the month
-    int daysPassed = day;
-
-    // Adjust for the start day of the month
-    daysPassed -= startDayOfMonth;
-
-    // Calculate the number of full weeks passed
-    int weeksPassed = daysPassed / 7;
-
-    return weeksPassed;
-}
-
-int getWeekNumberByYear(int day, int month, int year)
-{
-    // Array to store the number of days in each month
-    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    // Check if the year is a leap year
-    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
-    {
-        daysInMonth[2] = 29; // Update February days for leap years
-    }
-
-    // Calculate the number of days passed since the beginning of the year
-    int daysPassed = day;
-    for (int i = 1; i < month; i++)
-    {
-        daysPassed += daysInMonth[i];
-    }
-
-    // Calculate the number of full weeks passed
-    int weeksPassed = daysPassed / 7;
-
-    return weeksPassed;
-}
-
-void checkGPSTask(void *parameter)
-{
-    Serial.println("GPS Task started, waiting for signal...");
-
-    while (1)
-    {
-        if (getGPSTime())
-        {
-            Serial.println("GPS signal acquired.");
-            break; // GPS time obtained, exit the loop
-        }
-        else
-        {
-            Serial.println("Waiting for GPS signal...");
-            delay(1000);
-        }
-    }
-
-    Serial.println("GPS Task completed.");
-    vTaskDelete(xHandlegps); // Delete this task when done
-}
-
-bool getGPSTime()
-{
-    if (SerialGPS.available())
-    {
-        Serial.println("GPS Data Availabole");
-        String gpsData = SerialGPS.readStringUntil('\n'); // Read a line of GPS data
-        Serial.print("Raw GPS Data: ");
-        Serial.println(gpsData);
-
-        // Check if the line is a GPRMC string
-        if (gpsData.startsWith("$GPRMC"))
-        {
-            Serial.println("GPRMC");
-
-            return processGPRMC(gpsData);
-        }
-    }
-    return false;
-}
-
-void dateTimeTask(void *parameter)
-{
-    for (;;)
-    { // Infinite loop for the task
+void dateTimeTask(void *parameter) {
+    for (;;) { // Infinite loop for the task
         DateTime now = rtc.now();
 
         DAY = String(now.day());
@@ -1189,22 +1022,18 @@ void dateTimeTask(void *parameter)
         HOUR = String(now.hour());
         MINUTE = String(now.minute());
 
-        if (DAY.length() == 1)
-        {
+        if (DAY.length() == 1) {
             DAY = "0" + DAY;
         }
 
-        if (MONTH.length() == 1)
-        {
+        if (MONTH.length() == 1) {
             MONTH = "0" + MONTH;
         }
 
-        if (HOUR.length() == 1)
-        {
+        if (HOUR.length() == 1) {
             HOUR = "0" + HOUR;
         }
-        if (MINUTE.length() == 1)
-        {
+        if (MINUTE.length() == 1) {
             MINUTE = "0" + MINUTE;
         }
 
@@ -1239,25 +1068,21 @@ void dateTimeTask(void *parameter)
     vTaskDelete(xHandledatetime); // Delete the task if it ever breaks out of the loop
 }
 
-void loginTask(void *parameter)
-{
+void loginTask(void *parameter) {
     Serial.println("Login Task Started");
 
-    while (true)
-    {
+    while (true) {
         checkData = tempreadResponse();
 
         // Ack response from lcd
-        if (checkData == "5aa53824f4b")
-        {
+        if (checkData == "5aa53824f4b") {
             checkData = "";
         }
 
         // Serial.println("Data in loginTask:" +checkData);
 
         // Copyright accepted
-        if (containsPattern(checkData, "2e70"))
-        {
+        if (containsPattern(checkData, "2e70")) {
             // Get ssid and password of Wi-Fi
             internetSSID = preferences.getString("internetSSID", "");
             internetPassword = preferences.getString("internetPass", "");
@@ -1266,13 +1091,8 @@ void loginTask(void *parameter)
             Serial.println("Saved client password is: " + internetPassword);
 
             //  If ssid and password is available then auto connect
-            if (internetSSID == predefinedInternetSSID && internetPassword == predefinedInternetPassword)
-            {
+            if (internetSSID == predefinedInternetSSID && internetPassword == predefinedInternetPassword) {
                 pageSwitch(NOTIFICATION_PAGE);
-
-                // String message1 = "This is a Notification Screen";
-                // showMessage(notificationStatus1, message1);
-                // delay(100);
 
                 String message1 = "Connecting to Wi-Fi";
                 showMessage(notificationStatus1, message1);
@@ -1280,9 +1100,7 @@ void loginTask(void *parameter)
                 delay(5);
                 connectInternet();
             }
-
-            else
-            {
+            else {
                 delay(500);
                 pageSwitch(INTERNETPAGE);
                 configureInternet();
@@ -1297,8 +1115,7 @@ void loginTask(void *parameter)
 
             rememberClient = true;
 
-            if (rememberClient)
-            {
+            if (rememberClient) {
                 // Get client info for auto login
                 String tempClientusername = preferences.getString("client_username", "");
                 String tempClientpassword = preferences.getString("client_password", "");
@@ -1308,14 +1125,12 @@ void loginTask(void *parameter)
                 Serial.println("Saved client password is: " + tempClientpassword);
 
                 // If username and password is available then auto connect
-                if (tempClientusername == predefinedusername && tempClientpassword == predefinedPassword)
-                {
+                if (tempClientusername == predefinedusername && tempClientpassword == predefinedPassword) {
                     message3 = "Login Success";
                     showMessage(notificationStatus3, message3);
                     delay(1000);
                 }
-                else
-                {
+                else {
                     message3 = "Login Fail"; // Wait here and get login credentials again
                     showMessage(notificationStatus3, message3);
                     delay(1000);
@@ -1329,8 +1144,7 @@ void loginTask(void *parameter)
                 }
             }
 
-            else
-            {
+            else {
                 message3 = "Remember Client is not true";
                 showMessage(notificationStatus3, message3);
                 delay(1000);
@@ -1342,8 +1156,7 @@ void loginTask(void *parameter)
 
             storedUniqueData = uniqueData;
 
-            if (storedUniqueData == uniqueData)
-            {
+            if (storedUniqueData == uniqueData) {
                 String message3 = "Start Slide Show after unique key";
                 showMessage(notificationStatus4, message3);
                 delay(1000);
@@ -1355,6 +1168,15 @@ void loginTask(void *parameter)
             // Start slideShow
             slideShowFlag = true;
             slideShow();
+
+            Serial.println("Start LoRa task");
+            vTaskResume(xHandleLoRa); // Resume the next task
+
+            Serial.println("Start receiving task");
+            vTaskResume(xHandleRecmessage); // Resume the next task 
+
+            Serial.println("Start button task");
+            vTaskResume(xHandleButton); // Resume the next task
 
             Serial.println("Start Home page Tasks");
             vTaskResume(xHandlehomepage); // Resume the next task before exit
@@ -1672,8 +1494,7 @@ void loginTask(void *parameter)
                     adminLogin = false;
                 }
         */
-        if (uniqueKeyFlag)
-        {
+        if (uniqueKeyFlag) {
             Serial.println("Start Config Device");
             vTaskResume(xHandleconfigdevice); // Resume the next task before exit
             break;
@@ -1687,8 +1508,7 @@ void loginTask(void *parameter)
     vTaskSuspend(xHandlelogin); // Suspend the task
 }
 
-void readeyeIcon(String temppassword, uint16_t passwordvp, uint16_t passwordIcon, uint16_t passwordDisplay)
-{
+void readeyeIcon(String temppassword, uint16_t passwordvp, uint16_t passwordIcon, uint16_t passwordDisplay) {
     // Important to write password first
     String hexdatapassword = toHexString(temppassword);
     writeString(passwordvp, hexdatapassword); // Display password
@@ -1700,18 +1520,15 @@ void readeyeIcon(String temppassword, uint16_t passwordvp, uint16_t passwordIcon
     String iconRead = tempreadResponse();
     Serial.println("Read Icon Again :" + iconRead);
 
-    if (checkLast3DigitsMatch(iconRead, showPassword))
-    {
+    if (checkLast3DigitsMatch(iconRead, showPassword)) {
         Serial.println("Show Password");
         hexdatapassword = toHexString(temppassword);
         writeString(passwordDisplay, hexdatapassword); // Display password
     }
-    else if (checkLast3DigitsMatch(iconRead, hidePassword))
-    {
+    else if (checkLast3DigitsMatch(iconRead, hidePassword)) {
         Serial.println("Hide Password");
         String hiddenPassword = "";
-        for (int i = 0; i < temppassword.length(); i++)
-        {
+        for (int i = 0; i < temppassword.length(); i++) {
             hiddenPassword += '*';
         }
         // Serial.println("Hidden Password: " + hiddenPassword);
@@ -1721,32 +1538,27 @@ void readeyeIcon(String temppassword, uint16_t passwordvp, uint16_t passwordIcon
     }
 }
 
-void connectInternet()
-{
+void connectInternet() {
     Serial.println("connectInternet Started");
 
-    while (true)
-    {
+    while (true) {
         String internetData = tempreadResponse();
         Serial.println("Data in connect internet:" + internetData);
         delay(100);
 
-        /*Start of Auto connect*/
+        // Start of Auto connect
         internetSSID = preferences.getString("internetSSID", "");
         internetPassword = preferences.getString("internetPass", "");
 
         // if credentials are available
-        if ((!internetSSID.isEmpty() && !internetPassword.isEmpty()))
-        {
+        if ((!internetSSID.isEmpty() && !internetPassword.isEmpty())) {
             WiFi.begin(internetSSID.c_str(), internetPassword.c_str());
 
             unsigned long startAttemptTime = millis();
             bool isConnected = false;
 
-            while (millis() - startAttemptTime < 10000) // 30 seconds in milliseconds
-            {
-                if (WiFi.status() == WL_CONNECTED)
-                {
+            while (millis() - startAttemptTime < 10000) { // 10 seconds in milliseconds
+                if (WiFi.status() == WL_CONNECTED) {
                     isConnected = true;
                     Serial.println("WiFi Connected");
                     String InternetLoginStatus = "Wifi Connected";
@@ -1758,8 +1570,7 @@ void connectInternet()
                 }
             }
 
-            if (wifiConnectedFlag)
-            {
+            if (wifiConnectedFlag) {
                 String message2 = "Downloading Audio";
                 Serial.println(message2);
                 showMessage(notificationStatus2, message2);
@@ -1774,8 +1585,7 @@ void connectInternet()
                 break;
             }
 
-            else if (!isConnected)
-            {
+            else if (!isConnected) {
                 internetSSID = "";
                 internetPassword = "";
                 resetVP(INTERNET_PASSWORD);
@@ -1784,7 +1594,7 @@ void connectInternet()
                 resetVP(INTERNET_CONNECT_BUTTON);
 
                 String InternetLoginStatus = "Wifi Not Connected";
-                Serial.println("Failed to connect to WiFi within 30 seconds.");
+                Serial.println("Failed to connect to WiFi within 10 seconds.");
 
                 showMessage(notificationStatus1, InternetLoginStatus);
             }
@@ -1793,42 +1603,36 @@ void connectInternet()
     Serial.println("connectInternet Completed");
 }
 
-void configureInternet()
-{
+void configureInternet() {
     Serial.println("configureInternet Started");
 
-    while (true)
-    {
+    while (true) {
         String configure_internetData = tempreadResponse();
-        Serial.println("Data in configure internet:" + configure_internetData);
+        // Serial.println("Data in configure internet:" + configure_internetData);
         delay(100);
 
-        if (containsPattern(configure_internetData, "ffff"))
-        {
-            Serial.println("Data VP Address :" + configure_internetData);
+        if (containsPattern(configure_internetData, "ffff")) {
+            // Serial.println("Data VP Address :" + configure_internetData);
             resetVP(INTERNET_PASSWORD_DISPLAY);
             delay(100);
 
             String vpAddress = processFourthAndFifthBytes(configure_internetData);
-            Serial.println("Vp Address Internet :" + vpAddress);
+            // Serial.println("Vp Address Internet :" + vpAddress);
 
-            if (vpAddress == "33fa")
-            {
+            if (vpAddress == "33fa") {
                 delay(100);
                 startCheckingPassword(INTERNET_PASSWORD_DISPLAY, INTERNET_PASSWORD_ICON, configure_internetData);
             }
         }
 
         //  Check Icon
-        else if (containsPattern(configure_internetData, "345e"))
-        {
+        else if (containsPattern(configure_internetData, "345e")) {
             Serial.println("In Wi-Fi icon");
             delay(100);
             processPasswordDisplay(INTERNET_PASSWORD, INTERNET_PASSWORD_DISPLAY, INTERNET_PASSWORD_ICON);
         }
 
-        else if (containsPattern(configure_internetData, "345f"))
-        {
+        else if (containsPattern(configure_internetData, "345f")) {
             delay(100);
             processWiFiCredentials(INTERNET_SSID, INTERNET_PASSWORD, INTERNET_PASSWORD_DISPLAY, INTERNET_PASSWORD_ICON);
 
@@ -1839,18 +1643,15 @@ void configureInternet()
             Serial.println("Saved Internet Password: " + internetPassword);
             delay(100);
 
-            if (!internetSSID.isEmpty() && !internetPassword.isEmpty())
-            {
+            if (!internetSSID.isEmpty() && !internetPassword.isEmpty()) {
                 Serial.println("Checking Wifi");
                 WiFi.begin(internetSSID.c_str(), internetPassword.c_str());
 
                 unsigned long startAttemptTime = millis();
                 bool isConnected = false;
 
-                while (millis() - startAttemptTime < 10000) // 30 seconds in milliseconds
-                {
-                    if (WiFi.status() == WL_CONNECTED)
-                    {
+                while (millis() - startAttemptTime < 10000) { // 10 seconds in milliseconds 
+                    if (WiFi.status() == WL_CONNECTED) {
                         isConnected = true;
                         String InternetLoginStatus = "Wifi Connected";
                         Serial.println(InternetLoginStatus);
@@ -1875,8 +1676,7 @@ void configureInternet()
                     resetVP(clientLoginStatus);
                 }
 
-                if (wifiConnectedFlag)
-                {
+                if (wifiConnectedFlag) {
                     saveInternetCredentials(internetSSID, internetPassword);
 
                     String message2 = "Downloading Audio";
@@ -1893,15 +1693,14 @@ void configureInternet()
                     break;
                 }
 
-                else if (!isConnected)
-                {
+                else if (!isConnected) {
                     internetSSID = "";
                     internetPassword = "";
                     resetVP(INTERNET_PASSWORD);
                     resetVP(INTERNET_PASSWORD_DISPLAY);
                     // resetVP(INTERNET_PASSWORD_ICON);
                     resetVP(INTERNET_CONNECT_BUTTON);
-                    Serial.println("Failed to connect to WiFi within 30 seconds.");
+                    Serial.println("Failed to connect to WiFi within 10 seconds.");
                     String InternetLoginStatus = "Wifi Not Connected";
                     resetVP(clientLoginStatus);
                     String InternetLoginStatusBytes = toHexString(InternetLoginStatus);
@@ -1914,35 +1713,21 @@ void configureInternet()
     Serial.println("configureInternet Completed");
 }
 
-void configureLogin()
-{
+void configureLogin() {
 
     Serial.println("configureLogin started");
 
-    // resetVP(ADMIN_SSID);
-    // resetVP(ADMIN_PASSWORD);
-    // resetVP(ADMIN_PASSWORD_DISPLAY);
-    // resetVP(adminLoginStatus);
-
-    // resetVP(CLIENT_SSID);
-    // resetVP(CLIENT_PASSWORD);
-    // resetVP(CLIENT_PASSWORD_DISPLAY);
-    // resetVP(clientLoginStatus);
-
-    while (true)
-    {
+    while (true) {
 
         checkData = tempreadResponse();
 
         // Ack response from lcd
-        if (checkData == "5aa53824f4b")
-        {
+        if (checkData == "5aa53824f4b") {
             checkData = "";
         }
 
         // Switch user show admin
-        if (containsPattern(checkData, switchUser) && containsPattern(checkData, showAdmin))
-        {
+        if (containsPattern(checkData, switchUser) && containsPattern(checkData, showAdmin)) {
             resetVP(ADMIN_SSID);
             resetVP(ADMIN_PASSWORD);
             resetVP(ADMIN_PASSWORD_DISPLAY);
@@ -1968,8 +1753,7 @@ void configureLogin()
         }
 
         // Switch user show client
-        else if (containsPattern(checkData, switchUser) && containsPattern(checkData, showClient))
-        {
+        else if (containsPattern(checkData, switchUser) && containsPattern(checkData, showClient)) {
             resetVP(CLIENT_SSID);
             resetVP(CLIENT_PASSWORD);
             resetVP(CLIENT_PASSWORD_DISPLAY);
@@ -1995,21 +1779,18 @@ void configureLogin()
         }
 
         // Client panel or admin panel
-        else if (containsPattern(checkData, "ffff"))
-        {
+        else if (containsPattern(checkData, "ffff")) {
             resetVP(CLIENT_PASSWORD_DISPLAY);
             // resetVP(ADMIN_PASSWORD_DISPLAY);
             delay(100);
             String vpAddress = processFourthAndFifthBytes(checkData);
             Serial.println("Vp Address :" + vpAddress);
-            if (vpAddress == "3164")
-            {
+            if (vpAddress == "3164") {
                 Serial.println("Client Panel");
                 delay(100);
                 startCheckingPassword(CLIENT_PASSWORD_DISPLAY, CLIENT_PASSWORD_ICON, checkData);
             }
-            else if (vpAddress == "332f")
-            {
+            else if (vpAddress == "332f") {
                 Serial.println("Admin Panel");
                 delay(100);
                 startCheckingPassword(ADMIN_PASSWORD_DISPLAY, ADMIN_PASSWORD_ICON, checkData);
@@ -2017,26 +1798,22 @@ void configureLogin()
         }
 
         // Client password show/hide icons
-        else if (containsPattern(checkData, "31c8"))
-        {
+        else if (containsPattern(checkData, "31c8")) {
             Serial.println("In client Icon");
             delay(100);
             processPasswordDisplay(CLIENT_PASSWORD, CLIENT_PASSWORD_DISPLAY, CLIENT_PASSWORD_ICON);
         }
 
         // Admin password show/hide icons
-        else if (containsPattern(checkData, "3393"))
-        {
+        else if (containsPattern(checkData, "3393")) {
             Serial.println("In admin Icon");
             delay(100);
             processPasswordDisplay(ADMIN_PASSWORD, ADMIN_PASSWORD_DISPLAY, ADMIN_PASSWORD_ICON);
         }
 
         // Admin/Client login button
-        else if (containsPattern(checkData, "31ca"))
-        {
-            if (checkLastFourDigitsMatch(checkData, clientPanelDigits))
-            {
+        else if (containsPattern(checkData, "31ca")) {
+            if (checkLastFourDigitsMatch(checkData, clientPanelDigits)) {
                 Serial.println("Data from client login button");
                 clientLogin = true;
 
@@ -2045,8 +1822,7 @@ void configureLogin()
                 else
                     rememberClient = false;
             }
-            else if (checkLastFourDigitsMatch(checkData, adminPanelDigits))
-            {
+            else if (checkLastFourDigitsMatch(checkData, adminPanelDigits)) {
                 Serial.println("Data from admin login button");
                 adminLogin = true;
 
@@ -2058,8 +1834,7 @@ void configureLogin()
         }
 
         // Client Login Mode
-        if (clientLogin && wifiConnectedFlag)
-        {
+        if (clientLogin && wifiConnectedFlag) {
             Serial.println("Client Login Mode");
             delay(100);
 
@@ -2072,14 +1847,11 @@ void configureLogin()
             Serial.println("Saved password for client login: " + temppasswordClient);
             delay(100);
 
-            if (compareCredentials(tempusernameClient, temppasswordClient))
-            {
-                if (rememberClient)
-                {
+            if (compareCredentials(tempusernameClient, temppasswordClient)) {
+                if (rememberClient) {
                     saveClientCredentials(tempusernameClient, temppasswordClient);
                 }
-                else if (!rememberClient)
-                {
+                else if (!rememberClient) {
                     removeClientCredentials();
                 }
 
@@ -2140,9 +1912,7 @@ void configureLogin()
                 */
                 break;
             }
-
-            else
-            {
+            else {
                 String LoginStatus = "Login Fail";
                 String LoginStatusBytes = toHexString(LoginStatus);
                 delay(100);
@@ -2156,8 +1926,7 @@ void configureLogin()
         }
 
         // Admin Login Mode
-        else if (adminLogin && wifiConnectedFlag)
-        {
+        else if (adminLogin && wifiConnectedFlag) {
             Serial.println("Admin Login Mode");
             delay(100);
 
@@ -2170,14 +1939,11 @@ void configureLogin()
             Serial.println("Saved password for admin login: " + temppasswordAdmin);
             delay(100);
 
-            if (compareCredentials(tempusernameAdmin, temppasswordAdmin))
-            {
-                if (rememberAdmin)
-                {
+            if (compareCredentials(tempusernameAdmin, temppasswordAdmin)) {
+                if (rememberAdmin) {
                     saveAdminCredentials(tempusernameAdmin, temppasswordAdmin);
                 }
-                else if (!rememberAdmin)
-                {
+                else if (!rememberAdmin) {
                     removeAdminCredentials();
                 }
 
@@ -2238,9 +2004,7 @@ void configureLogin()
                 */
                 break;
             }
-
-            else
-            {
+            else {
                 String LoginStatus = "Login Fail";
                 String LoginStatusBytes = toHexString(LoginStatus);
                 delay(100);
@@ -2256,27 +2020,23 @@ void configureLogin()
     Serial.println("configureLogin completed");
 }
 
-void configuredeviceTask(void *parameter)
-{
+void configuredeviceTask(void *parameter) {
     Serial.println("configuredeviceTask Started");
 
-    while (true)
-    {
+    while (true) {
         DynamicJsonDocument doc(1024);
         // Serial.println("In Device Configuration");
         delay(100);
 
         String APIresponse = "";
 
-        if (APIresponse == "" && !APIresponseFlag)
-        {
+        if (APIresponse == "" && !APIresponseFlag) {
             // Send http get request to check devices are avaiable
             APIresponse = devicesAvailable_DB(getOrgDetailsUrl);
             Serial.println(APIresponse);
         }
 
-        if (APIresponse == "SUCCESSFUL")
-        {
+        if (APIresponse == "SUCCESSFUL") {
             vTaskResume(xHandledatetime); // Resume date time task
 
             APIresponseFlag = true;
@@ -2284,16 +2044,14 @@ void configuredeviceTask(void *parameter)
             pageSwitch(COMPANY_DETAIL_AUTO_LOAD);
             delay(5);
 
-            while (true)
-            {
+            while (true) {
                 sendReadCommand(VP_AUTO_UPLOAD_COMPANY_DETAILS, 0x1);
                 delay(100);
                 String autoLoad = tempreadResponse();
                 Serial.println("Details auto load: " + autoLoad);
 
                 // Autoload details
-                if (containsPattern(autoLoad, companyDoneButtonYes))
-                {
+                if (containsPattern(autoLoad, companyDoneButtonYes)) {
                     Serial.println("Will Work with Database API");
 
                     // Autoload getOrgDetails
@@ -2350,8 +2108,7 @@ void configuredeviceTask(void *parameter)
                 }
 
                 // Manually enter details
-                else if (containsPattern(autoLoad, companyDoneButtonNo))
-                {
+                else if (containsPattern(autoLoad, companyDoneButtonNo)) {
                     pageSwitch(COMPANY_DETAILS_PAGE1);
                     delay(100);
                     companyDetails();
@@ -2368,8 +2125,7 @@ void configuredeviceTask(void *parameter)
         }
 
         // Manually enter details
-        else
-        {
+        else {
             vTaskResume(xHandledatetime); // Resume date time task
 
             APIresponseFlag = true;
@@ -2389,8 +2145,7 @@ void configuredeviceTask(void *parameter)
             ConfigureDeviceFlag = true;
         }
 
-        if (ConfigureDeviceFlag)
-        {
+        if (ConfigureDeviceFlag) {
             Serial.println("Start hompageTasks");
             vTaskResume(xHandlehomepage); // Resume the next task before exit
             break;
@@ -2402,12 +2157,10 @@ void configuredeviceTask(void *parameter)
     vTaskDelete(xHandleconfigdevice); // Delete the task
 }
 
-void companyDetails()
-{
+void companyDetails() {
     Serial.println("companyDetails Started");
 
-    while (true)
-    {
+    while (true) {
         resetVP(COMPANY_DONE_BUTTON_ADDRESS);
         delay(100);
         sendReadCommand(COMPANY_DONE_BUTTON_ADDRESS, 0x1);
@@ -2415,8 +2168,7 @@ void companyDetails()
         String companyDetails = tempreadResponse();
         Serial.println("Company Details: " + companyDetails);
 
-        if (containsPattern(companyDetails, companyDetails_page1_next))
-        {
+        if (containsPattern(companyDetails, companyDetails_page1_next)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             delay(100);
@@ -2480,8 +2232,7 @@ void companyDetails()
             Serial.println("Key Responsible Person1 Contact: " + keyResponsiblePerson1Contact);
             delay(100);
 
-            if ((companyName == "") || (companyAddress == "") || (keyResponsiblePersonName == "") || (keyResponsiblePersonContact == "") || (keyResponsiblePerson1Name == "") || (keyResponsiblePerson1Contact == ""))
-            {
+            if ((companyName == "") || (companyAddress == "") || (keyResponsiblePersonName == "") || (keyResponsiblePersonContact == "") || (keyResponsiblePerson1Name == "") || (keyResponsiblePerson1Contact == "")) {
                 String Status = "Please Enter Details";
                 showMessage(clientLoginStatus, Status);
                 delay(1000);
@@ -2489,16 +2240,14 @@ void companyDetails()
 
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
             }
-            else
-            {
+            else {
                 pageSwitch(COMPANY_DETAILS_PAGE2);
                 Serial.println("Page Switched");
                 delay(5);
             }
         }
 
-        else if (containsPattern(companyDetails, companyDetails_page2_next))
-        {
+        else if (containsPattern(companyDetails, companyDetails_page2_next)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             sendReadCommand(VP_KEY_RESPONSIBLE_PERSON2_NAME, 0x28);
@@ -2541,8 +2290,7 @@ void companyDetails()
             Serial.println("Key Responsible Person3 Contact: " + keyResponsiblePerson3Contact);
             delay(100);
 
-            if ((keyResponsiblePerson2Name == "") || (keyResponsiblePerson2Contact == "") || (keyResponsiblePerson3Name == "") || (keyResponsiblePerson3Contact == ""))
-            {
+            if ((keyResponsiblePerson2Name == "") || (keyResponsiblePerson2Contact == "") || (keyResponsiblePerson3Name == "") || (keyResponsiblePerson3Contact == "")) {
                 String Status = "Please Enter Details";
                 showMessage(clientLoginStatus, Status);
                 delay(1000);
@@ -2550,23 +2298,20 @@ void companyDetails()
 
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
             }
-            else
-            {
+            else {
                 pageSwitch(COMPANY_DETAILS_PAGE3);
                 Serial.println("Page Switched");
                 delay(5);
             }
         }
 
-        else if (containsPattern(companyDetails, companyDetails_page2_back))
-        {
+        else if (containsPattern(companyDetails, companyDetails_page2_back)) {
             pageSwitch(COMPANY_DETAILS_PAGE1);
             Serial.println("Page Switched");
             delay(5);
         }
 
-        else if (containsPattern(companyDetails, companyDetails_page3_next))
-        {
+        else if (containsPattern(companyDetails, companyDetails_page3_next)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             sendReadCommand(VP_KEY_RESPONSIBLE_PERSON4_NAME, 0x28);
@@ -2609,8 +2354,7 @@ void companyDetails()
             Serial.println("Local Fire Department Contact: " + localFireDepartmentContact);
             delay(100);
 
-            if ((keyResponsiblePerson4Name == "") || (keyResponsiblePerson4Contact == "") || (localFireDepartmentName == "") || (localFireDepartmentContact == ""))
-            {
+            if ((keyResponsiblePerson4Name == "") || (keyResponsiblePerson4Contact == "") || (localFireDepartmentName == "") || (localFireDepartmentContact == "")) {
                 String Status = "Please Enter Details";
                 showMessage(clientLoginStatus, Status);
                 delay(1000);
@@ -2618,14 +2362,12 @@ void companyDetails()
 
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
             }
-            else
-            {
+            else {
                 companyDetailsFlag = true;
             }
         }
 
-        else if (containsPattern(companyDetails, companyDetails_page3_back))
-        {
+        else if (containsPattern(companyDetails, companyDetails_page3_back)) {
             pageSwitch(COMPANY_DETAILS_PAGE2);
             Serial.println("Page Switched");
             delay(5);
@@ -2634,8 +2376,7 @@ void companyDetails()
         if (companyDetailsFlag)
             break;
     }
-    if (companyDetailsFlag)
-    {
+    if (companyDetailsFlag) {
         companyDetailsFlag = false;
         pageSwitch(COMPANY_MANUFACTURE_DETAILS);
         delay(5);
@@ -2645,12 +2386,10 @@ void companyDetails()
     Serial.println("companyDetails completed");
 }
 
-void manufactureDetails()
-{
+void manufactureDetails() {
     Serial.println("manufactureDetails Started");
 
-    while (true)
-    {
+    while (true) {
         resetVP(VP_MANUFACTURING_DETAILS);
         delay(100);
         sendReadCommand(VP_MANUFACTURING_DETAILS, 0x1);
@@ -2658,8 +2397,7 @@ void manufactureDetails()
         String manufacturerDetails = tempreadResponse();
         Serial.println("Manufacturing Details :" + manufacturerDetails);
 
-        if (containsPattern(manufacturerDetails, Manufacturing_Details_Upload))
-        {
+        if (containsPattern(manufacturerDetails, Manufacturing_Details_Upload)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             delay(100);
@@ -2712,8 +2450,7 @@ void manufactureDetails()
             serialNumber = hexToString(sncextractedData);
             Serial.println("Manufacturer Serial No: " + serialNumber);
 
-            if ((manufacturerName == "") || (manufacturerContact == "") || (manufacturerEmail == "") || (dateOfManufacture == "") || (serialNumber == ""))
-            {
+            if ((manufacturerName == "") || (manufacturerContact == "") || (manufacturerEmail == "") || (dateOfManufacture == "") || (serialNumber == "")) {
                 String Status = "Please Enter Details";
                 showMessage(clientLoginStatus, Status);
                 delay(1000);
@@ -2721,8 +2458,7 @@ void manufactureDetails()
 
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
             }
-            else
-            {
+            else {
                 companyManufacturerDetails = true;
             }
         }
@@ -2730,8 +2466,7 @@ void manufactureDetails()
         if (companyManufacturerDetails)
             break;
 
-        else if (containsPattern(manufacturerDetails, Manufacturing_Details_Back))
-        {
+        else if (containsPattern(manufacturerDetails, Manufacturing_Details_Back)) {
             companyManufacturerDetailsBack = true;
             pageSwitch(COMPANY_DETAILS_PAGE3);
             Serial.println("Page Switched");
@@ -2740,14 +2475,12 @@ void manufactureDetails()
         }
     }
 
-    if (companyManufacturerDetailsBack)
-    {
+    if (companyManufacturerDetailsBack) {
         companyManufacturerDetailsBack = false;
         companyDetails();
     }
 
-    else if (companyManufacturerDetails)
-    {
+    else if (companyManufacturerDetails) {
         companyManufacturerDetails = false;
         pageSwitch(COMPANY_UNIT_DETAILS);
         delay(5);
@@ -2756,12 +2489,10 @@ void manufactureDetails()
     Serial.println("manufactureDetails completed");
 }
 
-void unitDetails()
-{
+void unitDetails() {
     Serial.println("unitDetails Started");
 
-    while (true)
-    {
+    while (true) {
         resetVP(VP_UNIT_DONE);
         delay(100);
         sendReadCommand(VP_UNIT_DONE, 0x1);
@@ -2769,8 +2500,7 @@ void unitDetails()
         String unitDetails = tempreadResponse();
         Serial.println("Unit Details :" + unitDetails);
 
-        if (containsPattern(unitDetails, Unit_Details_Upload))
-        {
+        if (containsPattern(unitDetails, Unit_Details_Upload)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             delay(100);
@@ -2833,8 +2563,7 @@ void unitDetails()
             ipAddress = hexToString(ipdcextractedData);
             Serial.println("Unit IP Address: " + ipAddress);
 
-            if ((locationOfUnit == "") || (assignedUnitNumber == "") || (dateOfUnitInstallation == "") || (unitInstaller == "") || (unitContactDetails == "") || (ipAddress == ""))
-            {
+            if ((locationOfUnit == "") || (assignedUnitNumber == "") || (dateOfUnitInstallation == "") || (unitInstaller == "") || (unitContactDetails == "") || (ipAddress == "")) {
                 String Status = "Please Enter Details";
                 showMessage(clientLoginStatus, Status);
                 delay(1000);
@@ -2842,8 +2571,7 @@ void unitDetails()
 
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
             }
-            else
-            {
+            else {
                 UnitDetailsFlag = true;
             }
         }
@@ -2851,8 +2579,7 @@ void unitDetails()
         if (UnitDetailsFlag)
             break;
 
-        else if (containsPattern(unitDetails, Unit_Details_Back))
-        {
+        else if (containsPattern(unitDetails, Unit_Details_Back)) {
             unitDetailsBack = true;
             pageSwitch(COMPANY_MANUFACTURE_DETAILS);
             Serial.println("Page Switched");
@@ -2861,14 +2588,12 @@ void unitDetails()
         }
     }
 
-    if (unitDetailsBack)
-    {
+    if (unitDetailsBack) {
         unitDetailsBack = false;
         manufactureDetails();
     }
 
-    else if (UnitDetailsFlag)
-    {
+    else if (UnitDetailsFlag) {
         UnitDetailsFlag = false;
         pageSwitch(DEVICE_DIRECTION_DETAILS_PAGE);
         delay(5);
@@ -2877,12 +2602,10 @@ void unitDetails()
     Serial.println("unitDetails completed");
 }
 
-void devicesDirectionDetails()
-{
+void devicesDirectionDetails() {
     Serial.println("devicesDirectionDetails Started");
 
-    while (true)
-    {
+    while (true) {
         resetVP(VP_DEVICE_DRIVER_RETURN_KEY);
         delay(100);
         sendReadCommand(VP_DEVICE_DRIVER_RETURN_KEY, 0x1);
@@ -2890,20 +2613,17 @@ void devicesDirectionDetails()
         String arrowIndication = tempreadResponse();
         Serial.println("Arrow Details :" + arrowIndication);
 
-        if (containsPattern(arrowIndication, Left_Arrow_Indication))
-        {
+        if (containsPattern(arrowIndication, Left_Arrow_Indication)) {
             Serial.println("Left Side Move");
             arrowFlags = true;
         }
 
-        else if (containsPattern(arrowIndication, Right_Arrow_Indication))
-        {
+        else if (containsPattern(arrowIndication, Right_Arrow_Indication)) {
             Serial.println("Right Side Move");
             arrowFlags = true;
         }
 
-        else if (containsPattern(arrowIndication, Arrow_Details_Back))
-        {
+        else if (containsPattern(arrowIndication, Arrow_Details_Back)) {
             ArrowDetailsBack = true;
             pageSwitch(COMPANY_UNIT_DETAILS);
             Serial.println("Page Switched");
@@ -2914,26 +2634,22 @@ void devicesDirectionDetails()
             break;
     }
 
-    if (ArrowDetailsBack)
-    {
+    if (ArrowDetailsBack) {
         ArrowDetailsBack = false;
         unitDetails();
     }
 
-    else if (arrowFlags)
-    {
+    else if (arrowFlags) {
         arrowFlags = false;
         pageSwitch(DEVICE_CONFIGURED_SUCCESSFULLY);
     }
     Serial.println("devicesDirectionDetails completed");
 }
 
-void slideShow()
-{
+void slideShow() {
     Serial.println("slideShow Started");
 
-    while (slideShowFlag)
-    {
+    while (slideShowFlag) {
         vTaskSuspend(xHandledatetime); // Suspend date time task while slideShow
 
         String ack = tempreadResponse();
@@ -2942,21 +2658,19 @@ void slideShow()
         // Record the start time
         unsigned long startTime = millis();
         // Check if 5 seconds have passed
-        while (millis() - startTime < 5000)
-        {
-
+        while (millis() - startTime < 5000) {
             ack = tempreadResponse();
 
-            if (ack == "5aa53824f4b")
-            {
+            if (ack == "5aa53824f4b") {
                 ack = "";
             }
 
-            Serial.print("Acknowledgment from LCD: ");
-            Serial.println(ack);
+            if (ack != "") {
+                Serial.print("Acknowledgment from LCD: ");
+                Serial.println(ack);
+            }
 
-            if (checkLastFourDigitsMatch(ack, Home_Screen))
-            {
+            if (checkLastFourDigitsMatch(ack, Home_Screen)) {
                 pageSwitch(HOME_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
@@ -2966,31 +2680,30 @@ void slideShow()
             }
             delay(100);
         }
-        if (!slideShowFlag)
-        {
+        if (!slideShowFlag) {
             break;
         }
 
-        pageSwitch(CLIENT_LOGO);
+        if (NODEID == 1) pageSwitch(CLIENT_LOGO_SUN); 
+        else if (NODEID == 2) pageSwitch(CLIENT_LOGO_SERVEST);
+        else if (NODEID == 3) pageSwitch(CLIENT_LOGO_BROLL);
 
         // Record the start time
         startTime = millis();
         // Check if 10 seconds have passed
-        while (millis() - startTime < 10000)
-        {
-
+        while (millis() - startTime < 10000) {
             ack = tempreadResponse();
 
-            if (ack == "5aa53824f4b")
-            {
+            if (ack == "5aa53824f4b") {
                 ack = "";
             }
 
-            Serial.print("Acknowledgment from LCD: ");
-            Serial.println(ack);
+            if (ack != "") {
+                Serial.print("Acknowledgment from LCD: ");
+                Serial.println(ack);
+            }
 
-            if (checkLastFourDigitsMatch(ack, Home_Screen))
-            {
+            if (checkLastFourDigitsMatch(ack, Home_Screen)) {
                 pageSwitch(HOME_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
@@ -3000,8 +2713,38 @@ void slideShow()
             }
             delay(100);
         }
-        if (!slideShowFlag)
-        {
+        if (!slideShowFlag) {
+            break;
+        }
+
+        pageSwitch(LOCALMAP_PAGE);
+
+        // Record the start time
+        startTime = millis();
+        // Check if 15 seconds have passed
+        while (millis() - startTime < 15000) {
+            ack = tempreadResponse();
+
+            if (ack == "5aa53824f4b") {
+                ack = "";
+            }
+
+            if (ack != "") {
+                Serial.print("Acknowledgment from LCD: ");
+                Serial.println(ack);
+            }
+
+            if (checkLastFourDigitsMatch(ack, Home_Screen)) {
+                pageSwitch(HOME_PAGE);
+                Serial.println("Page Switched");
+                delay(5);
+                slideShowFlag = false;
+                vTaskResume(xHandledatetime); // Resume if touch is detected
+                break;
+            }
+            delay(100);
+        }
+        if (!slideShowFlag) {
             break;
         }
 
@@ -3010,21 +2753,19 @@ void slideShow()
         // Record the start time
         startTime = millis();
         // Check if 15 seconds have passed
-        while (millis() - startTime < 15000)
-        {
-
+        while (millis() - startTime < 15000) {
             ack = tempreadResponse();
 
-            if (ack == "5aa53824f4b")
-            {
+            if (ack == "5aa53824f4b") {
                 ack = "";
             }
 
-            Serial.print("Acknowledgment from LCD: ");
-            Serial.println(ack);
+            if (ack != "") {
+                Serial.print("Acknowledgment from LCD: ");
+                Serial.println(ack);
+            }
 
-            if (checkLastFourDigitsMatch(ack, Home_Screen))
-            {
+            if (checkLastFourDigitsMatch(ack, Home_Screen)) {
                 pageSwitch(HOME_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
@@ -3034,42 +2775,21 @@ void slideShow()
             }
             delay(100);
         }
-        if (!slideShowFlag)
-        {
+        if (!slideShowFlag) {
             break;
         }
-
-        /*
-        pageSwitch(0x0019);
-        delay(1000);
-        ack = tempreadResponse();
-
-        if(ack == "5aa53824f4b")
-        {
-            ack = "";
-        }
-
-        Serial.print("Acknowledgment from LCD: ");
-        Serial.println(ack);
-
-        if (checkLastFourDigitsMatch(ack, Home_Screen))
-        {
-            pageSwitch(HOME_PAGE);
-            Serial.println("Page Switched");
-            delay(5);
-            vTaskResume(xHandledatetime); // Resume if touch is detected
-            break;
-        }*/
     }
     Serial.println("slideShow completed");
 }
 
-void slideShow_EvacuationDiagrams()
-{
-    Serial.println("slideShow Started");
+void slideShow_EvacuationDiagrams() {
+    Serial.println("slideShow_EvacuationDiagrams Started");
 
-    while (slideShowFlag)
-    {
+    // if (!activatedByLoRa) { 
+    //     sendSMS(); // send emergency sms 
+    // }
+
+    while (slideShowFlag) {
         vTaskSuspend(xHandledatetime); // Suspend date time task while slideShow
 
         String ack = tempreadResponse();
@@ -3077,22 +2797,20 @@ void slideShow_EvacuationDiagrams()
         pageSwitch(SITEMAP_PAGE);
         // Record the start time
         unsigned long startTime = millis();
-        // Check if 30 seconds have passed
-        while (millis() - startTime < 30000)
-        {
-
+        // Check if 15 seconds have passed
+        while (millis() - startTime < 15000) {
             ack = tempreadResponse();
 
-            if (ack == "5aa53824f4b")
-            {
+            if (ack == "5aa53824f4b") {
                 ack = "";
             }
 
-            Serial.print("Acknowledgment from LCD: ");
-            Serial.println(ack);
+            if (ack != "") {
+                Serial.print("Acknowledgment from LCD: ");
+                Serial.println(ack);
+            }
 
-            if (checkLastFourDigitsMatch(ack, Home_Screen))
-            {
+            if (checkLastFourDigitsMatch(ack, Home_Screen)) {
                 pageSwitch(HOME_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
@@ -3100,10 +2818,23 @@ void slideShow_EvacuationDiagrams()
                 vTaskResume(xHandledatetime); // Resume if touch is detected
                 break;
             }
-            delay(100);
+
+            delay(50);
+
+            if (!activatedByLoRa && evacuationActivefromLoRa) {
+                pageSwitch(HOME_PAGE);
+                Serial.println("Page Switched");
+                // deactivateFromButton();
+                activateRGBflag = false;
+                activateSoundflag = false;
+                delay(100);
+                slideShowFlag = false;
+                vTaskResume(xHandledatetime); // Resume if touch is detected
+                break;
+            }
         }
-        if (!slideShowFlag)
-        {
+
+        if (!slideShowFlag) {
             break;
         }
 
@@ -3112,21 +2843,19 @@ void slideShow_EvacuationDiagrams()
         // Record the start time
         startTime = millis();
         // Check if 15 seconds have passed
-        while (millis() - startTime < 15000)
-        {
-
+        while (millis() - startTime < 15000) {
             ack = tempreadResponse();
 
-            if (ack == "5aa53824f4b")
-            {
+            if (ack == "5aa53824f4b") {
                 ack = "";
             }
 
-            Serial.print("Acknowledgment from LCD: ");
-            Serial.println(ack);
+            if (ack != "") {
+                Serial.print("Acknowledgment from LCD: ");
+                Serial.println(ack);
+            }
 
-            if (checkLastFourDigitsMatch(ack, Home_Screen))
-            {
+            if (checkLastFourDigitsMatch(ack, Home_Screen)) {
                 pageSwitch(HOME_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
@@ -3134,124 +2863,154 @@ void slideShow_EvacuationDiagrams()
                 vTaskResume(xHandledatetime); // Resume if touch is detected
                 break;
             }
-            delay(100);
+
+            delay(50);
+
+            if (!activatedByLoRa && evacuationActivefromLoRa) {
+                pageSwitch(HOME_PAGE);
+                Serial.println("Page Switched");
+                // deactivateFromButton();
+                activateRGBflag = false;
+                activateSoundflag = false;
+                delay(100);
+                slideShowFlag = false;
+                vTaskResume(xHandledatetime); // Resume if touch is detected
+                break;
+            }
         }
-        if (!slideShowFlag)
-        {
+        if (!slideShowFlag) {
             break;
         }
     }
-    Serial.println("slideShow completed");
+    Serial.println("slideShow_EvacuationDiagrams completed");
 }
 
-void homepageTasks(void *parameter)
-{
+void slideShow_EvacuationDiagrams_forButton() {
+    Serial.println("slideShow_EvacuationDiagrams_forButton Started");
+    vTaskSuspend(xHandleLoRa); // node discovery
+
+    while (slideShowFlag) {
+        vTaskSuspend(xHandledatetime); // Suspend date time task while slideShow
+
+        int val = digitalRead(siteEvacuation_buttonPin);
+        Serial.print("val : ");
+        Serial.println(val);
+
+        pageSwitch(SITEMAP_PAGE);
+        // Record the start time
+        unsigned long startTime = millis();
+        // Check if 15 seconds have passed
+        while (millis() - startTime < 15000) {
+            val = digitalRead(siteEvacuation_buttonPin);
+            if (val == HIGH) {
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+
+                pageSwitch(HOME_PAGE);
+                Serial.println("Page Switched");
+                delay(5);
+
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+
+                activateRGBflag = false;
+                activateSoundflag = false;
+
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+
+                slideShowFlag = false;
+                vTaskResume(xHandledatetime); // Resume if touch is detected
+                break;
+            }
+        }
+        if (!slideShowFlag) {
+            // send message to other nodes to stop site evacuation
+            sendDeactivationMessage();
+
+            vTaskResume(xHandleLoRa); // node discovery
+            break;
+        }
+
+        pageSwitch(EVACUATION_PROCEDURE_PAGE);
+
+        // Record the start time
+        startTime = millis();
+        // Check if 15 seconds have passed
+        while (millis() - startTime < 15000) {
+            val = digitalRead(siteEvacuation_buttonPin);
+            if (val == HIGH) {
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+
+                pageSwitch(HOME_PAGE);
+                Serial.println("Page Switched");
+                delay(5);
+
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+
+                activateRGBflag = false;
+                activateSoundflag = false;
+
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+
+                slideShowFlag = false;
+                vTaskResume(xHandledatetime); // Resume if touch is detected
+                break;
+            }
+        }
+        if (!slideShowFlag) {
+            // send message to other nodes to stop site evacuation
+            sendDeactivationMessage();
+
+            vTaskResume(xHandleLoRa); // node discovery
+            break;
+        }
+    }
+    Serial.println("slideShow_EvacuationDiagrams_forButton completed");
+}
+
+void homepageTasks(void *parameter) {
     Serial.println("homepageTasks Started");
 
-    while (true)
-    {
+    while (true) {
         // Reset the last activity time
-        lastActivityTime = millis();
+        // lastActivityTime = millis();
 
         checkData = tempreadResponse();
 
         // unwanted lcd response
-        if (checkData == "5aa53824f4b")
-        {
+        if (checkData == "5aa53824f4b") {
             checkData = "";
         }
-        Serial.println("Data in homepageTasks:" + checkData);
-        delay(100);
-
-        // Handle site evacuation button on top priority
-        // Read the state of the push button
-        int reading = digitalRead(siteEvacuation_buttonPin);
-
-        // If the switch changed, due to noise or pressing:
-        if (reading != lastButtonState)
-        {
-            // reset the debouncing timer
-            lastDebounceTime = millis();
-        }
-
-        if ((millis() - lastDebounceTime) > debounceDelay)
-        {
-            // Whatever the reading is at, it's been there for longer than the debounce
-            // delay, so take it as the actual current state:
-            if (reading != buttonState)
-            {
-                buttonState = reading;
-
-                // Only toggle the evacuation state if the new button state is LOW
-                if (buttonState == LOW)
-                {
-                    evacuationActive = !evacuationActive;
-
-                    if (evacuationActive)
-                    {
-                        Serial.println("Start");
-                        // start leds
-                        FillSolidLeds(SideLEDs, NUM_LEDS_RGB2, CRGB::Red); // Red when Activation
-                        delay(1000);
-                        FillSolidLeds(SideLEDs, NUM_LEDS_RGB2, CRGB::Black);
-
-                        startSiren();
-                        audio.connecttoFS(SD, filename); // SD card file
-                        audio.setFileLoop(true);         // Set file to loop
-                        // send message to other nodes to activate
-
-                        // Start slideShow
-                        slideShowFlag = true;
-                        slideShow_EvacuationDiagrams();
-                    }
-                    else
-                    {
-                        Serial.println("Stop evacuation");
-                        stopSiren(); // Stop siren
-                        audio.stopSong();
-                        audio.setFileLoop(false); // Reset file to loop
-                        // stop leds
-                        // send message to other nodes to stop
-                    }
-                }
-            }
-        }
-
-        // Save the reading. Next time through the loop, it'll be the lastButtonState:
-        lastButtonState = reading;
-
-        // Small delay to stabilize the loop
-        delay(10);
+        if (checkData != "") Serial.println("Data in homepageTasks:" + checkData);
+        delay(50);
 
         // Show/Hide Menu & select between Menu functions
-        if (containsPattern(checkData, "6211"))
-        {
+        if (containsPattern(checkData, "6211")) {
             Serial.println("Data from home screen menu");
 
-            if (containsPattern(checkData, Home_Screen_Menu))
-            {
+            if (containsPattern(checkData, Home_Screen_Menu)) {
                 pageSwitch(MENU_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
             }
 
-            else if (containsPattern(checkData, Menu_Home_Screen))
-            {
+            else if (containsPattern(checkData, Menu_Home_Screen)) {
                 pageSwitch(HOME_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
             }
 
-            else if (containsPattern(checkData, batteryCalc))
-            {
-                // pageSwitch(HOME_PAGE);
-                // Serial.println("Page Switched");
+            else if (containsPattern(checkData, batteryCalc)) {
+                // page switching from dwin
                 delay(5);
             }
 
             // Handle Logout
-            else if (containsPattern(checkData, logout))
-            {
+            else if (containsPattern(checkData, logout)) {
                 adminLogin = false;
                 clientLogin = false;
 
@@ -3285,28 +3044,32 @@ void homepageTasks(void *parameter)
 
                 pageSwitch(HOME_PAGE);
             }
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // local map
-        else if (containsPattern(checkData, "6212"))
-        {
+        else if (containsPattern(checkData, "6212")) {
             pageSwitch(LOCALMAP_PAGE);
             Serial.println("local map");
             delay(5);
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Site map
-        else if (containsPattern(checkData, "6213"))
-        {
-            // pageSwitch(SITEMAP_PAGE);
-            pageSwitch(LOCALMAP_PAGE); // only for testing
+        else if (containsPattern(checkData, "6213")) {
+            pageSwitch(SITEMAP_PAGE);
             Serial.println("Site map");
             delay(5);
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Show Units lists
-        else if (containsPattern(checkData, "6214"))
-        {
+        else if (containsPattern(checkData, "6214")) {
             pageSwitch(UNITSLISTS_PAGE);
             Serial.println("Page Switched");
             delay(5);
@@ -3317,15 +3080,16 @@ void homepageTasks(void *parameter)
             FyreBoxUnitListFlag = true;
 
             FyreBoxUnitList();
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Show Report
-        else if (containsPattern(checkData, "6215"))
-        {
+        else if (containsPattern(checkData, "6215")) {
             Serial.println("Data from home screen report");
 
-            if (containsPattern(checkData, Home_Screen_Report))
-            {
+            if (containsPattern(checkData, Home_Screen_Report)) {
                 pageSwitch(SHOW_REPORT_PAGE);
                 Serial.println("Page Switched");
                 delay(5);
@@ -3335,45 +3099,55 @@ void homepageTasks(void *parameter)
 
                 displayIcons();
             }
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Self Test
-        else if (containsPattern(checkData, "6216"))
-        {
-            Serial.println("Self Test");
+        else if (containsPattern(checkData, "6216")) {
+            vTaskSuspend(xHandleSound);
+
+            resetVP(clientLoginStatus);
+            String selfTest_message = "Self Test";
+            Serial.println(selfTest_message);
+            showMessage(clientLoginStatus, selfTest_message);
+                        
             audio.connecttoFS(SD, filename2); // SD card file
-            audio.loop();
+            while (audio.isRunning()) {
+                audio.loop();
+                delay(10);
+            }
             delay(1000);
+            resetVP(clientLoginStatus);
+
+            vTaskResume(xHandleSound);
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Show Checklist
-        else if (containsPattern(checkData, "6217") && !dataEnteredtoday)
-        {
+        else if (containsPattern(checkData, "6217") && !dataEnteredtoday) {
             Serial.println("Data from home screen checklist");
 
             lastDataEntryEEPROM = EEPROM.read(EEPROMAddress);
             Serial.print("Last data entry week number: ");
             Serial.println(lastDataEntryEEPROM);
 
-            if (weekByYear == lastDataEntryEEPROM)
-            {
+            if (weekByYear == lastDataEntryEEPROM) {
                 dataEnteredtoday = false;
                 Serial.println("Data Entered today");
             }
-
-            else if (weekByYear > lastDataEntryEEPROM)
-            {
+            else if (weekByYear > lastDataEntryEEPROM) {
                 weekElapsed = true;
                 Serial.println("Week Elapsed");
             }
-
-            else
-            {
+            else {
                 Serial.println("Next data will be received in next week");
             }
 
-            if (containsPattern(checkData, Home_Screen_Checklist))
-            {
+            if (containsPattern(checkData, Home_Screen_Checklist)) {
                 pageSwitch(CHECKLISTPAGE1);
                 Serial.println("Page Switched");
                 delay(5);
@@ -3383,73 +3157,128 @@ void homepageTasks(void *parameter)
 
                 CheckBoxes();
             }
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Checklist Data is Received
-        else if (containsPattern(checkData, "6217") && dataEnteredtoday)
-        {
-            Serial.println("Data is Received, next data will be received in next week");
+        else if (containsPattern(checkData, "6217") && dataEnteredtoday) {
+            resetVP(clientLoginStatus);
+            String message = "Data is Received, next data will be received in next week";
+            Serial.println(message);
+            showMessage(clientLoginStatus, message);
+            delay(1000);
+            resetVP(clientLoginStatus);
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
-        // handle site evacuation button on LCD
-        else if (containsPattern(checkData, "6218"))
-        {
-            if (containsPattern(checkData, "100"))
-            {
-                Serial.println("activate site evacuation");
+        // handle site activation
+        else if (containsPattern(checkData, "6218") && containsPattern(checkData, "100") || activatedByLoRa) {
+            vTaskSuspend(xHandleLoRa); // node discovery 
 
-                // start leds
-                FillSolidLeds(SideLEDs, NUM_LEDS_RGB2, CRGB::Red); // Red when Activation
-                delay(1000);
-                FillSolidLeds(SideLEDs, NUM_LEDS_RGB2, CRGB::Black);
+            if (activatedByLoRa) {
+                evacuationActivefromLoRa = true;
+                Serial.println("activate site evacuation with LoRa");
+                Display_AC_DEAC_Icon(0x00); // 00 show deactivate button
 
-                startSiren();
-                audio.connecttoFS(SD, filename); // SD card file
-                audio.setFileLoop(true);         // Set file to loop
-                // send message to other nodes to activate
+                activateRGBflag = true;
+                activateSoundflag = true;
+            }
+            if (containsPattern(checkData, "100")) {
 
-                // Start slideShow
-                slideShowFlag = true;
-                slideShow_EvacuationDiagrams();
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
+
+                evacuationActivefromLCD = true;
+                Serial.println("activate site evacuation with LCD");
+
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
+
+                activateRGBflag = true;
+                activateSoundflag = true;
+
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
             }
 
-            else if (containsPattern(checkData, "101"))
-            {
-                Serial.println("Stop evacuation");
-                stopSiren(); // Stop siren
-                audio.stopSong();
-                audio.setFileLoop(false); // Reset file to loop
-                // stop leds
-                // send message to other nodes to stop
+            // Check the task state before resuming it
+            eTaskState taskState = eTaskGetState(xHandleRGB);
+            if (taskState == eSuspended) {
+                Serial.println("rgbTask Resumed"); // start leds
+                vTaskResume(xHandleRGB);
             }
+            delay(50);
+
+            // Check the task state before resuming it
+            taskState = eTaskGetState(xHandleSound);
+            if (taskState == eSuspended) {
+                Serial.println("Sound Resumed"); // start siren and audio
+                vTaskResume(xHandleSound);
+            }
+            delay(50);
+
+            // Start slideShow
+            slideShowFlag = true;
+            slideShow_EvacuationDiagrams(); 
+        }
+
+        // handle site deactivation
+        else if (containsPattern(checkData, "6218") && containsPattern(checkData, "101") || (!activatedByLoRa && evacuationActivefromLoRa)) {
+            if (evacuationActivefromLCD) {
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+                delay(5);
+                sendDeactivationMessage();
+
+                Serial.println("deactivate site evacuation with LCD");
+                evacuationActivefromLCD = false;
+
+                // send message to other nodes to stop site evacuation
+                sendDeactivationMessage();
+                delay(5);
+                sendDeactivationMessage();
+            }
+
+            if(evacuationActivefromLoRa) {
+                Serial.println("deactivate site evacuation with LoRa");
+                evacuationActivefromLoRa = false;
+                Display_AC_DEAC_Icon(0x01); // 01 show site evacuation button
+            }
+
+            activateRGBflag = false;
+            activateSoundflag = false;
+
+            vTaskResume(xHandleLoRa); // node discovery
+
+            Serial.println("deactivate site evacuation done");
+
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Start Slide show
-        else if (containsPattern(checkData, "6219"))
-        {
+        else if (containsPattern(checkData, "6219")) {
             Serial.println("Start slideShow");
-
-            if (containsPattern(checkData, Home_Screen_Back))
-            {
+            if (containsPattern(checkData, Home_Screen_Back)) {
                 // Start slideShow
                 slideShowFlag = true;
                 slideShow();
             }
-        }
 
-        // return keycode on site map
-        else if (containsPattern(checkData, "6220"))
-        {
-            // currently page switching
+            // Reset the last activity time
+            lastActivityTime = millis();
         }
 
         // Check if the idle timeout has elapsed
-        else if (millis() - lastActivityTime >= idleTimeout)
-        {
+        else if (millis() - lastActivityTime >= idleTimeout) {
             Serial.println("Idle timeout has elapsed");
             // Start slideShow
-            slideShowFlag = true;
-            slideShow();
+            // slideShowFlag = true;
+            // slideShow();
 
             // Reset the last activity time
             lastActivityTime = millis();
@@ -3461,24 +3290,19 @@ void homepageTasks(void *parameter)
     vTaskSuspend(xHandlehomepage); // Suspend the task
 }
 
-void CheckBoxes()
-{
+void CheckBoxes() {
     Serial.println("CheckBoxes Started");
-
-    while (checkBoxFlag)
-    {
+    while (checkBoxFlag) {
         delay(100);
         String checkBoxesData = tempreadResponse();
 
-        if (checkBoxesData == "5aa53824f4b")
-        {
+        if (checkBoxesData == "5aa53824f4b") {
             checkBoxesData = "";
         }
 
         Serial.println("Data in checkbox: " + checkBoxesData);
 
-        if (checkLastFourDigitsMatch(checkBoxesData, geticonPage1))
-        {
+        if (checkLastFourDigitsMatch(checkBoxesData, geticonPage1)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             // String message = "Please wait while fetching Data";
@@ -3544,16 +3368,14 @@ void CheckBoxes()
             Serial.println("Led Light ON (White): " + ledLightOnWhite);
             delay(100);
 
-            if ((controlFunction != "0") && (speakerActivate != "0") && (firemanActivateBox != "0") && (bellRingSystemActivation != "0") && (batteryHealth != "0") && (ledLightOnWhite != "0"))
-            {
+            if ((controlFunction != "0") && (speakerActivate != "0") && (firemanActivateBox != "0") && (bellRingSystemActivation != "0") && (batteryHealth != "0") && (ledLightOnWhite != "0")) {
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
 
                 pageSwitch(CHECKLISTPAGE2);
                 Serial.println("Page Switched");
                 delay(5);
             }
-            else
-            {
+            else {
                 String checkboxStatus = "Please check all boxes";
                 showMessage(clientLoginStatus, checkboxStatus);
                 delay(1000);
@@ -3561,8 +3383,7 @@ void CheckBoxes()
             }
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage1))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage1)) {
             pageSwitch(HOME_PAGE);
             Serial.println("Page Switched");
             delay(5);
@@ -3570,8 +3391,7 @@ void CheckBoxes()
             break;
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, geticonPage2))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, geticonPage2)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             // String message = "Please wait while fetching Data";
@@ -3638,16 +3458,14 @@ void CheckBoxes()
             Serial.println("Arrow Working: " + arrowWorking);
             delay(100);
 
-            if ((ledRedActivation != "0") && (smsReceivedFyreboxActivated != "0") && (lcdScreenWork != "0") && (systemActivateWeeklySelfTest != "0") && (evacuatioDiagram != "0") && (arrowWorking != "0"))
-            {
+            if ((ledRedActivation != "0") && (smsReceivedFyreboxActivated != "0") && (lcdScreenWork != "0") && (systemActivateWeeklySelfTest != "0") && (evacuatioDiagram != "0") && (arrowWorking != "0")) {
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
 
                 pageSwitch(CHECKLISTPAGE3);
                 Serial.println("Page Switched");
                 delay(5);
             }
-            else
-            {
+            else {
                 String checkboxStatus = "Please check all boxes";
                 showMessage(clientLoginStatus, checkboxStatus);
                 delay(1000);
@@ -3655,15 +3473,13 @@ void CheckBoxes()
             }
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage2))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage2)) {
             pageSwitch(CHECKLISTPAGE1);
             Serial.println("Page Switched");
             delay(5);
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, geticonPage3))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, geticonPage3)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             // String message = "Please wait while fetching Data";
@@ -3709,16 +3525,14 @@ void CheckBoxes()
             Serial.println("Flash Sign Panel: " + flashSignPanel);
             delay(100);
 
-            if ((permanentPower != "0") && (illuminatedSignalsWorking != "0") && (batteriesReplacement != "0") && (flashSignPanel != "0"))
-            {
+            if ((permanentPower != "0") && (illuminatedSignalsWorking != "0") && (batteriesReplacement != "0") && (flashSignPanel != "0")) {
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
 
                 pageSwitch(CHECKLISTPAGE4);
                 Serial.println("Page Switched");
                 delay(5);
             }
-            else
-            {
+            else {
                 String checkboxStatus = "Please check all boxes";
                 showMessage(clientLoginStatus, checkboxStatus);
                 delay(1000);
@@ -3726,15 +3540,13 @@ void CheckBoxes()
             }
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage3))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage3)) {
             pageSwitch(CHECKLISTPAGE2);
             Serial.println("Page Switched");
             delay(5);
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, geticonPage4))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, geticonPage4)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             // String message = "Please wait while fetching Data";
@@ -3790,16 +3602,14 @@ void CheckBoxes()
             Serial.println("LogBook Up to Date: " + LogbookUptodate);
             delay(100);
 
-            if ((unitSecured != "00") && (faciaComponentSecured != "00") && (evacuationDiagramUptodate != "00") && (fyreboxFreeObstructions != "00") && (LogbookUptodate != "00"))
-            {
+            if ((unitSecured != "00") && (faciaComponentSecured != "00") && (evacuationDiagramUptodate != "00") && (fyreboxFreeObstructions != "00") && (LogbookUptodate != "00")) {
                 vTaskResume(xHandledatetime); // Resume date time task after data is fetched
 
                 pageSwitch(CHECKLISTPAGE5);
                 Serial.println("Page Switched");
                 delay(5);
             }
-            else
-            {
+            else {
                 String checkboxStatus = "Please check all boxes";
                 showMessage(clientLoginStatus, checkboxStatus);
                 delay(1000);
@@ -3807,15 +3617,13 @@ void CheckBoxes()
             }
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage4))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage4)) {
             pageSwitch(CHECKLISTPAGE3);
             Serial.println("Page Switched");
             delay(5);
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, Checklist_Done))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, Checklist_Done)) {
             vTaskSuspend(xHandledatetime); // Suspend date time task while fetching data
 
             // String message = "Please wait while fetching Data";
@@ -3851,8 +3659,7 @@ void CheckBoxes()
             Serial.println("Any Rust Unit: " + anyRustUnit);
             delay(100);
 
-            if ((fyreboxUnitWipedCleaned != "00") && (anyDamageBox != "00") && (anyRustUnit != "00"))
-            {
+            if ((fyreboxUnitWipedCleaned != "00") && (anyDamageBox != "00") && (anyRustUnit != "00")) {
                 checkBoxFlag = false;
                 Serial.println("checkBoxFlag is false ");
 
@@ -3925,8 +3732,7 @@ void CheckBoxes()
                 Serial.println("Page Switched");
                 delay(5);
             }
-            else
-            {
+            else {
                 String checkboxStatus = "Please check all boxes";
                 showMessage(clientLoginStatus, checkboxStatus);
                 delay(1000);
@@ -3934,8 +3740,7 @@ void CheckBoxes()
             }
         }
 
-        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage5))
-        {
+        else if (checkLastFourDigitsMatch(checkBoxesData, previousONpage5)) {
             pageSwitch(CHECKLISTPAGE4);
             Serial.println("Page Switched");
             delay(5);
@@ -3944,16 +3749,12 @@ void CheckBoxes()
     Serial.println("CheckBoxes completed");
 }
 
-void displayIcons()
-{
+void displayIcons() {
     Serial.println("displayIcons Started");
-
-    while (displayIconsFlag)
-    {
+    while (displayIconsFlag) {
         String LCD_RESPONSE = tempreadResponse();
 
-        if (containsPattern(LCD_RESPONSE, Report_Home_Screen))
-        {
+        if (containsPattern(LCD_RESPONSE, Report_Home_Screen)) {
             displayIconsFlag = false;
             Serial.println("displayIconsFlag is false ");
 
@@ -4003,17 +3804,14 @@ void displayIcons()
         vpINT = vp.toInt();
         // Serial.print("VP address in int: "); Serial.println(vpINT);
 
-        if (vpINT == showWeek_page1_VP) // for page 1
-        {
-            if (keycode == Next_week)
-            {
+        if (vpINT == showWeek_page1_VP) { // for page 1
+            if (keycode == Next_week) {
                 resetVP(basicGraphic_page1);
                 delay(100);
                 // sendIconcommand(basicGraphic_page1, icon_5, icon_4, icon_3, icon_2, icon_1, icon_0);
                 delay(5);
             }
-            else if (keycode == Prev_week)
-            {
+            else if (keycode == Prev_week) {
                 resetVP(basicGraphic_page1);
                 delay(100);
                 sendIconcommand(basicGraphic_page1, icon_0, icon_1, icon_2, icon_3, icon_4, icon_5);
@@ -4021,8 +3819,7 @@ void displayIcons()
             }
         }
 
-        else if (vpINT == showWeek_page2_VP) // for page 2
-        {
+        else if (vpINT == showWeek_page2_VP) {// for page 2
             if (keycode == Next_week)
             {
                 resetVP(basicGraphic_page2);
@@ -4039,17 +3836,14 @@ void displayIcons()
             }
         }
 
-        else if (vpINT == showWeek_page3_VP) // for page 3
-        {
-            if (keycode == Next_week)
-            {
+        else if (vpINT == showWeek_page3_VP) { // for page 3
+            if (keycode == Next_week) {
                 resetVP(basicGraphic_page3);
                 delay(100);
                 // sendIconcommand(basicGraphic_page3, icon_15, icon_14, icon_13, icon_12, 0x04, 0x04);
                 delay(5);
             }
-            else if (keycode == Prev_week)
-            {
+            else if (keycode == Prev_week) {
                 resetVP(basicGraphic_page3);
                 delay(100);
                 sendIconcommand(basicGraphic_page3, icon_12, icon_13, icon_14, icon_15, 0x04, 0x04);
@@ -4057,17 +3851,14 @@ void displayIcons()
             }
         }
 
-        else if (vpINT == showWeek_page4_VP) // for page 4
-        {
-            if (keycode == Next_week)
-            {
+        else if (vpINT == showWeek_page4_VP) { // for page 4
+            if (keycode == Next_week) {
                 resetVP(basicGraphic_page4);
                 delay(100);
                 // sendIconcommand(basicGraphic_page4, icon_21, icon_20, icon_19, icon_18, icon_17, icon_16);
                 delay(5);
             }
-            else if (keycode == Prev_week)
-            {
+            else if (keycode == Prev_week) {
                 resetVP(basicGraphic_page4);
                 delay(100);
                 sendIconcommand(basicGraphic_page4, icon_16, icon_17, icon_18, icon_19, icon_20, icon_21);
@@ -4075,17 +3866,14 @@ void displayIcons()
             }
         }
 
-        else if (vpINT == showWeek_page5_VP) // for page 5
-        {
-            if (keycode == Next_week)
-            {
+        else if (vpINT == showWeek_page5_VP) { // for page 5
+            if (keycode == Next_week) {
                 resetVP(basicGraphic_page5);
                 delay(100);
                 // sendIconcommand(basicGraphic_page5, icon_24, icon_23, icon_22, 0x04, 0x04, 0x04);
                 delay(5);
             }
-            else if (keycode == Prev_week)
-            {
+            else if (keycode == Prev_week) {
                 resetVP(basicGraphic_page5);
                 delay(100);
                 sendIconcommand(basicGraphic_page5, icon_22, icon_23, icon_24, 0x04, 0x04, 0x04);
@@ -4093,8 +3881,7 @@ void displayIcons()
             }
         }
 
-        switch (keycode)
-        {
+        switch (keycode) {
         case 51: // Next_page1
         {
             resetVP(basicGraphic_page2);
@@ -4189,58 +3976,49 @@ void displayIcons()
     Serial.println("displayIcons completed");
 }
 
-void saveClientCredentials(const String &username, const String &password)
-{
+void saveClientCredentials(const String &username, const String &password) {
     preferences.putString("client_username", username);
     preferences.putString("client_password", password);
 }
 
-void removeClientCredentials()
-{
+void removeClientCredentials() {
     preferences.putString("client_username", " ");
     preferences.putString("client_password", " ");
 }
 
-void saveAdminCredentials(const String &username, const String &password)
-{
+void saveAdminCredentials(const String &username, const String &password) {
     preferences.putString("admin_username", username);
     preferences.putString("admin_password", password);
 }
 
-void removeAdminCredentials()
-{
+void removeAdminCredentials() {
     preferences.putString("admin_username", " ");
     preferences.putString("admin_password", " ");
 }
 
-void saveInternetCredentials(const String &ssid, const String &password)
-{
+void saveInternetCredentials(const String &ssid, const String &password) {
     preferences.putString("internetSSID", ssid);
     preferences.putString("internetPass", password);
 }
 
-bool RememberIcon(uint16_t rememberLogin)
-{
+bool RememberIcon(uint16_t rememberLogin) {
     delay(100);
     sendReadCommand(rememberLogin, 0x1);
     delay(100);
     String iconRead = tempreadResponse();
     Serial.println("Read remember Icon:" + iconRead);
 
-    if (checkLast3DigitsMatch(iconRead, "101"))
-    {
+    if (checkLast3DigitsMatch(iconRead, "101")) {
         Serial.println("Remember me is true");
         return true;
     }
-    else
-    {
+    else {
         Serial.println("Remember me is false");
         return false;
     }
 }
 
-void showMessage(uint16_t VP_ADDRESS, String displaymessage)
-{
+void showMessage(uint16_t VP_ADDRESS, String displaymessage) {
     resetVP(VP_ADDRESS);
     Serial.println(displaymessage);
     String StatusBytes = toHexString(displaymessage);
@@ -4248,9 +4026,7 @@ void showMessage(uint16_t VP_ADDRESS, String displaymessage)
     writeString(VP_ADDRESS, StatusBytes);
 }
 
-void displayFyreBoxUnitList()
-{
-
+void displayFyreBoxUnitList() {
     // Reset all VPs before updating
     resetVP(Text_Active_Device_1);
     resetVP(Text_Active_Device_2);
@@ -4305,28 +4081,23 @@ void displayFyreBoxUnitList()
     size_t inactiveIndex = 0;
 
     // Loop through the node statuses and write the corresponding values
-    for (const auto &status : nodeStatuses)
-    {
+    for (const auto &status : nodeStatuses) {
         // Convert nodeId to string and then to hexadecimal
         String nodeIdString = String(status.nodeId);
         String message = "Node ID " + nodeIdString;
         String nodeBytes = toHexString(message);
         delay(10);
 
-        if (status.isActive)
-        {
+        if (status.isActive) {
             // Write to the active device address for this node
-            if (activeIndex < Text_Active_Devices_Size)
-            {
+            if (activeIndex < Text_Active_Devices_Size) {
                 writeString(Text_Active_Devices[activeIndex], nodeBytes);
                 activeIndex++;
             }
         }
-        else
-        {
+        else {
             // Write to the inactive device address for this node
-            if (inactiveIndex < Text_Inactive_Devices_Size)
-            {
+            if (inactiveIndex < Text_Inactive_Devices_Size) {
                 writeString(Text_Inactive_Devices[inactiveIndex], nodeBytes);
                 inactiveIndex++;
             }
@@ -4334,18 +4105,12 @@ void displayFyreBoxUnitList()
     }
 }
 
-void FyreBoxUnitList()
-{
-
+void FyreBoxUnitList() {
     Serial.println("FyreBoxUnitsLists started");
-
-    while (FyreBoxUnitListFlag)
-    {
-
+    while (FyreBoxUnitListFlag) {
         String LCD_RESPONSE = tempreadResponse();
 
-        if (containsPattern(LCD_RESPONSE, Report_Home_Screen))
-        {
+        if (containsPattern(LCD_RESPONSE, Report_Home_Screen)) {
             FyreBoxUnitListFlag = false;
             Serial.println("FyreBoxUnitListFlag is false ");
 
@@ -4354,86 +4119,67 @@ void FyreBoxUnitList()
             delay(5);
         }
 
-        else if (containsPattern(LCD_RESPONSE, VP_ReturnKeyCode))
-        {
-            while (true)
-            {
-                if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Active_Next))
-                {
+        else if (containsPattern(LCD_RESPONSE, VP_ReturnKeyCode)) {
+            while (true) {
+                if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Active_Next)) {
                     Serial.println("ReturnKeyCode_Active_Next");
                     break;
                 }
-                else if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Active_Prev))
-                {
+                else if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Active_Prev)) {
                     Serial.println("ReturnKeyCode_Active_Prev");
                     break;
                 }
-                else if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Inactive_Next))
-                {
+                else if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Inactive_Next)) {
                     Serial.println("ReturnKeyCode_Inactive_Next");
                     break;
                 }
-                else if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Inactive_Prev))
-                {
+                else if (containsPattern(LCD_RESPONSE, ReturnKeyCode_Inactive_Prev)) {
                     Serial.println("ReturnKeyCode_Inactive_Prev");
                     break;
                 }
             }
         }
-        // static unsigned long lastUpdateTime = 0;
-        // unsigned long currentMillis = millis();
-
-        // if(currentMillis - lastUpdateTime > 60000)
-        // {
-        //     displayFyreBoxUnitList();
-        //     lastUpdateTime = currentMillis;
-        // }
+        delay(100);
     }
     Serial.println("FyreBoxUnitsLists completed");
 }
 
 // For LoRa Mesh
-void LoRatask(void *parameter)
-{
+void LoRatask(void *parameter) {
     Serial.println("LoRatask Started");
-    for (;;)
-    {
+    for (;;) {
         static unsigned long lastBroadcastTime = 0;
         static unsigned long lastCheckTime = 0;
         static unsigned long lastStatusPrintTime = 0;
         unsigned long currentMillis = millis();
 
-        if (currentMillis - lastBroadcastTime > 30000)
-        { // Every 30 seconds
+        if (currentMillis - lastBroadcastTime > 5000) { // Every 5 seconds  
             broadcastPresence();
             lastBroadcastTime = currentMillis;
         }
 
-        listenForNodes();
+        // listenForNodes();
 
-        if (currentMillis - lastCheckTime > 10000)
-        { // Every 10 seconds
+        if (currentMillis - lastCheckTime > 10000) { // Every 10 seconds
             checkNodeActivity();
             lastCheckTime = currentMillis;
         }
 
-        if (currentMillis - lastStatusPrintTime > 60000)
-        { // Every 60 seconds
+        if (currentMillis - lastStatusPrintTime > 20000) { // Every 60 seconds
             // printNodeStatuses();  // Print the statuses of all nodes
             printNetworkStats();
             displayFyreBoxUnitList();
             lastStatusPrintTime = currentMillis;
         }
+        delay(100);
     }
     Serial.println("LoRatask completed");
     Serial.println("LoRatask Suspended");
     vTaskSuspend(xHandleLoRa); // Suspend the task
 }
 
-const __FlashStringHelper *getErrorString(uint8_t error)
-{
-    switch (error)
-    {
+const __FlashStringHelper *getErrorString(uint8_t error) {
+    switch (error) {
     case 1:
         return F("invalid length");
         break;
@@ -4453,26 +4199,21 @@ const __FlashStringHelper *getErrorString(uint8_t error)
     return F("unknown");
 }
 
-bool initializeMESH()
-{
-    if (!mesh.init())
-    {
+bool initializeMESH() {
+    if (!mesh.init()) {
         // Serial.println("Mesh initialization failed");
         return false;
     }
     return true;
 }
 
-void broadcastPresence()
-{
-    const char *presenceMsg = "Node Present";
+void broadcastPresence() {
+    const char *presenceMsg = "Present";
     uint8_t status = mesh.sendtoWait((uint8_t *)presenceMsg, strlen(presenceMsg) + 1, RH_BROADCAST_ADDRESS);
-    if (status == RH_ROUTER_ERROR_NONE)
-    {
+    if (status == RH_ROUTER_ERROR_NONE) {
         Serial.println("Message sent successfully");
     }
-    else
-    {
+    else {
         Serial.print("Failed to send message, error: ");
         Serial.println(status);
         Serial.println((const __FlashStringHelper *)getErrorString(status));
@@ -4480,14 +4221,12 @@ void broadcastPresence()
 }
 
 // Function to listen for other nodes and update their status
-void listenForNodes()
-{
+void listenForNodes() {
     uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
     uint8_t from;
 
-    if (mesh.recvfromAckTimeout(buf, &len, 2000, &from))
-    {
+    if (mesh.recvfromAckTimeout(buf, &len, 2000, &from)) {
         Serial.print("Received message from node ");
         Serial.print(from);
         Serial.print(": ");
@@ -4499,35 +4238,28 @@ void listenForNodes()
 }
 
 // Function to update or add a node status in the list
-void updateNodeStatus(uint8_t nodeId)
-{
+void updateNodeStatus(uint8_t nodeId) {
     bool nodeFound = false;
     unsigned long currentTime = millis();
-    for (auto &status : nodeStatuses)
-    {
-        if (status.nodeId == nodeId)
-        {
+    for (auto &status : nodeStatuses) {
+        if (status.nodeId == nodeId) {
             status.lastSeen = currentTime;
             status.isActive = true;
             nodeFound = true;
             break;
         }
     }
-    if (!nodeFound)
-    {
+    if (!nodeFound) {
         nodeStatuses.push_back({nodeId, currentTime, true});
     }
 }
 
 // Function to check and update the activity status of nodes
-void checkNodeActivity()
-{
+void checkNodeActivity() {
     unsigned long currentTime = millis();
     const unsigned long timeout = 60000; // 1 minute timeout to consider a node as dead
-    for (auto &status : nodeStatuses)
-    {
-        if (status.isActive && (currentTime - status.lastSeen > timeout))
-        {
+    for (auto &status : nodeStatuses) {
+        if (status.isActive && (currentTime - status.lastSeen > timeout)) {
             status.isActive = false;
             Serial.print("Node ");
             Serial.print(status.nodeId);
@@ -4537,20 +4269,17 @@ void checkNodeActivity()
 }
 
 // Function to get the total number of known nodes
-size_t getTotalNodes()
-{
+size_t getTotalNodes() {
     return nodeStatuses.size();
 }
 
 // Function to print the status of all nodes known to this node
-void printNodeStatuses()
-{
+void printNodeStatuses() {
     size_t totalNodes = getTotalNodes();
     Serial.print("Total Nodes: ");
     Serial.println(totalNodes);
 
-    for (const auto &status : nodeStatuses)
-    { // range based loop
+    for (const auto &status : nodeStatuses) { // range based loop
         Serial.print("Node ");
         Serial.print(status.nodeId);
         Serial.print(": ");
@@ -4558,8 +4287,7 @@ void printNodeStatuses()
     }
 }
 
-void printNetworkStats()
-{
+void printNetworkStats() {
     // int totalNodes = nodeStatuses.size();  // Total number of nodes is the size of the vector
     // int activeNodes = 0;
     // int deadNodes = 0;
@@ -4569,19 +4297,16 @@ void printNetworkStats()
     deadNodes = 0;
 
     // Count active and dead nodes
-    for (const auto &status : nodeStatuses)
-    {
+    for (const auto &status : nodeStatuses) {
         Serial.print("Node ");
         Serial.print(status.nodeId);
         Serial.print(": ");
         Serial.println(status.isActive ? "Active" : "Dead");
 
-        if (status.isActive)
-        {
+        if (status.isActive) {
             activeNodes++; // Increment active node count
         }
-        else
-        {
+        else {
             deadNodes++; // Increment dead node count
         }
     }
@@ -4599,134 +4324,117 @@ void printNetworkStats()
 }
 
 // Led functions
-void setupLeds()
-{
-    //   FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB1>(leds, NUM_LEDS);
-    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB6>(SideLEDs, NUM_LEDS_RGB6);
-    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB5>(RightArrowLEDs, NUM_LEDS_RGB5);
-    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB4>(LeftArrowLEDs, NUM_LEDS_RGB4);
-    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB3>(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB3);
-    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB2>(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB2);
+void setupLeds() {
+    FastLED.setBrightness(RGB_LED_BRIGHTNESS);
+    // FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB1>(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB1);
+    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB2>(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2);
+    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB3>(LeftArrowLEDs, NUM_LEDS_RGB3);
+    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB4>(RightArrowLEDs, NUM_LEDS_RGB4);
+    FastLED.addLeds<NEOPIXEL, DATA_PIN_RGB5>(SideLEDs, NUM_LEDS_RGB5);
+
+    // set all leds to white
+    // FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB1, CRGB::White);
+    FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2, CRGB::White);
+    FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB3, CRGB::White);
+    FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+    FillSolidLeds(SideLEDs, NUM_LEDS_RGB5, CRGB::White);
 }
 
-// void setAllLedsRed() {
-//   led_blink(RGB_LED_BRIGHTNESS, 0, 0);
-//   FastLED.show();
-// }
-
-// void setAllLedsBlue() {
-//   led_blink(0, 0, RGB_LED_BRIGHTNESS);
-//   FastLED.show();
-// }
-
-// void setAllLedsGreen() {
-//   led_blink(0, RGB_LED_BRIGHTNESS, 0);
-//   FastLED.show();
-// }
-
-// void setAllLedYellow() {
-//   led_blink(RGB_LED_BRIGHTNESS, RGB_LED_BRIGHTNESS, 0);
-//   FastLED.show();
-// }
-
-// void setAllLedWhite() {
-//   led_blink(RGB_LED_BRIGHTNESS, RGB_LED_BRIGHTNESS, RGB_LED_BRIGHTNESS);
-//   FastLED.show();
-// }
-
-// void turnOffAllLeds(struct CRGB * targetArray, int numToFill) {
-//   fill_solid(targetArray, numToFill, CRGB::Black);
-//   FastLED.show();
-// }
-
-void stableWhite(struct CRGB *targetArray, int numToFill)
-{
-    fill_solid(targetArray, numToFill, CRGB::White);
-    FastLED.show();
-
-    //   FillSolidLeds(SideLEDs, NUM_LEDS_RGB2, CRGB::White);    // White when power on
-    //   delay(1000);
-    //   FillSolidLeds(SideLEDs, NUM_LEDS_RGB2, CRGB::Black);
-}
-
-void FillSolidLeds(struct CRGB *targetArray, int numToFill, const struct CRGB &color)
-{
+void FillSolidLeds(struct CRGB *targetArray, int numToFill, const struct CRGB &color) {
     fill_solid(targetArray, numToFill, color);
     FastLED.show();
 }
 
-// void stableRed() {
-//   fill_solid(leds, NUM_LEDS, CRGB::Red);
-//   FastLED.show();
-// }
+void ActivateRGBs(bool activate, bool dir) {
+    if (activate) {
+        // FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB1, CRGB::White);
+        BlinkLeds(blink_speed);        // parameter: Blink speed
+        RgbArrowMove(dir, move_speed); // 1st parameter: 1 for Right arrow, 0 for Left arrow 2nd parameter: move speed
+    }
+    else {
+        // FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB1, CRGB::White);
+        FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2, CRGB::White);
+        FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB3, CRGB::White);
+        FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+        FillSolidLeds(SideLEDs, NUM_LEDS_RGB5, CRGB::White);
+    }
+}
 
-// void stableGreen() {
-//   fill_solid(leds, NUM_LEDS, CRGB::Green);
-//   FastLED.show();
-// }
+void BlinkLeds(int duration) {
+    if (millis() - millis_blink_rgb >= duration) {
+        millis_blink_rgb = millis();
+        prev_blink_color = !prev_blink_color;
+        if (prev_blink_color) {
+            FillSolidLeds(SideLEDs, NUM_LEDS_RGB5, CRGB::Red);
+            FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2, CRGB::Red);
+        }
+        else {
+            FillSolidLeds(SideLEDs, NUM_LEDS_RGB5, CRGB::Black);
+            FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2, CRGB::Black);
+        }
+    }
+}
 
-// void stableBlue() {
-//   fill_solid(leds, NUM_LEDS, CRGB::Blue);
-//   FastLED.show();
-// }
+void RgbArrowMove(bool dir, uint8_t speed) {
+    if (millis() - millis_move_rgb > SECOND_TO_MILLIS / speed) {
+        millis_move_rgb = millis();
 
-// void stableYellow() {
-//   fill_solid(leds, NUM_LEDS, CRGB::Yellow);
-//   FastLED.show();
-// }
+        if (dir) { // 1 for Right arrow, 0 for Left arrow
+            FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+            RightArrowLEDs[move_id] = CRGB::Red;
+        }
+        else {
+            FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+            LeftArrowLEDs[move_id] = CRGB::Red;
+        }
+        FastLED.show();
+        // Serial.println("move_id: " + String(move_id));
+        move_id++;
 
-// void led_blink(uint8_t red_intensity, uint8_t green_intensity, uint8_t blue_intensity)
-// {
+        if (move_id == (NUM_LEDS_RGB4 + 1)) {
+            move_id = 0;
+            for (int i = 0; i < NUM_LEDS_RGB4; i++) { // Put this in void setup()
+                if (dir) {// 1 for Right arrow, 0 for Left arrow
+                    FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+                    RightArrowLEDs[i] = CRGB::White;
+                }
+                else {
+                    FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+                    LeftArrowLEDs[i] = CRGB::White;
+                }
+            }
+            FastLED.show();
+        }
+    }
+}
 
-//   for (int i = 0; i < NUM_LEDS / 2; i++) {
-//     // fade everything out
-//     leds.fadeToBlackBy(40);
-
-//     // set an LED value with user-specified intensities
-//     leds[i] = CRGB(red_intensity, green_intensity, blue_intensity);
-
-//     // mirror the first 20 leds to the last 20 leds
-//     leds(NUM_LEDS / 2, NUM_LEDS - 1) = leds(NUM_LEDS / 2 - 1, 0);
-
-//     FastLED.show();
-//     FastLED.delay(33);
-//   }
-// }
-
-void initAudio()
-{
+void initAudio() {
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
     audio.setVolume(21); // default 0...21
 }
 
-void download_audio()
-{
+void download_audio() {
     sd_card();
     // Download both files
     //   downloadFile(resourceURL, filename); // uncomment to download audio file 1
     //   downloadFile(resourceURL2, filename2); // uncomment to download audio file 2
 }
 
-void sd_card()
-{
-    if (!SD.begin(5))
-    {
+void sd_card() {
+    if (!SD.begin(5)) {
         Serial.println("Card Mount Failed");
         return;
     }
 }
 
 // Function to download a file from a given URL and save it to the specified filename
-void downloadFile(const char *resourceURL, const char *filename)
-{
+void downloadFile(const char *resourceURL, const char *filename) {
     HTTPClient http;
     http.begin(resourceURL);
     int httpCode = http.GET();
 
-    if (httpCode > 0)
-    {
-        if (httpCode == HTTP_CODE_FOUND || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-        {
+    if (httpCode > 0) {
+        if (httpCode == HTTP_CODE_FOUND || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
             // Handle redirection
             String newURL = http.getLocation();
             http.end();            // Close the first connection
@@ -4734,66 +4442,287 @@ void downloadFile(const char *resourceURL, const char *filename)
             httpCode = http.GET(); // Repeat GET request
         }
 
-        if (httpCode == HTTP_CODE_OK)
-        {
+        if (httpCode == HTTP_CODE_OK) {
             File file = SD.open(filename, FILE_WRITE);
-            if (file)
-            {
+            if (file) {
                 http.writeToStream(&file);
                 file.close();
                 Serial.println("File downloaded and saved to SD card");
             }
-            else
-            {
+            else {
                 Serial.println("Failed to open file for writing");
             }
         }
-        else
-        {
+        else {
             Serial.printf("Failed to retrieve file. HTTP error: %s\n", http.errorToString(httpCode).c_str());
         }
     }
-    else
-    {
+    else {
         Serial.printf("Failed to retrieve file. HTTP error: %s\n", http.errorToString(httpCode).c_str());
     }
 
     http.end();
 }
 
-void audioTask(void *parameter)
-{
+void buttonTask(void *parameter) {
+    while (true) {
+        if (!evacuationActivefromLCD) {
+            while (digitalRead(siteEvacuation_buttonPin) == LOW) {
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
 
-    // audio.connecttoFS(SD, "/Fyrebox_-_Fyrebox_Alarm_with_Siren.mp3"); // SD card file
+                evacuationActivefromBTN = true;
+                Serial.println("Evacuation started from button");
 
-    for (;;)
-    {
-        // if (buttonPressed) {
-        audio.loop();
-        // }
-        delay(10); // Small delay to prevent watchdog timer issues
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
+
+                activateRGBflag = true;
+                activateSoundflag = true;
+
+                // Check the task state before resuming it
+                eTaskState taskState = eTaskGetState(xHandleRGB);
+                if (taskState == eSuspended) {
+                    Serial.println("rgbTask Resumed"); // start leds
+                    vTaskResume(xHandleRGB);
+                }
+                delay(50);
+
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
+
+                // Check the task state before resuming it
+                taskState = eTaskGetState(xHandleSound);
+                if (taskState == eSuspended) {
+                    Serial.println("Sound Resumed"); // start siren and audio
+                    vTaskResume(xHandleSound);
+                }
+                delay(50);
+
+                // send message to other nodes to start site evacuation
+                sendActivationMessage();
+
+                // Start slideShow
+                slideShowFlag = true;
+                slideShow_EvacuationDiagrams_forButton();
+                delay(50);
+            }
+            evacuationActivefromBTN = false;
+            delay(50);
+        }
+        delay(50);
     }
 }
 
-void startSiren()
-{
-    digitalWrite(SirenPIN, HIGH);
+void RecvMessageTask(void *parameter) {
+    Serial.println("messageTask started");
+    for(;;) {
+        uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
+        uint8_t len = sizeof(buf);
+        uint8_t from;
+
+        if (mesh.recvfromAckTimeout(buf, &len, 2000, &from)) {
+            Serial.print("Received message from node ");
+            Serial.print(from);
+            Serial.print(": ");
+            Serial.println((char *)buf);
+
+            String temp = (char *)buf;
+
+            if(temp == "FRS-Act") {
+                Serial.println("messageTask received Activate");
+                activatedByLoRa = true;
+            }
+            else if (temp == "Deact-FRS") {
+                Serial.println("messageTask received Deactivate");
+                activatedByLoRa = false;
+            }
+            else if (temp == "Present") {
+                // Update node information or add new node
+                updateNodeStatus(from);
+            }
+        }
+        delay(10); 
+    }
+    Serial.println("RecvMessageTask completed");
+    Serial.println("RecvMessageTask Suspended");
+    vTaskSuspend(xHandleRecmessage); // Suspend the task
 }
 
-void stopSiren()
-{
-    digitalWrite(SirenPIN, LOW);
+// 
+void sendActivationMessage() {
+  const char* activeMsg = "FRS-Act";
+  uint8_t status = mesh.sendtoWait((uint8_t*)activeMsg, strlen(activeMsg) + 1, RH_BROADCAST_ADDRESS);
+  if (status == RH_ROUTER_ERROR_NONE) {
+      Serial.println("Activation message sent successfully");
+  } 
+  else {
+      Serial.print("Failed to send Activation message, error: ");
+      Serial.println(status);
+      Serial.println((const __FlashStringHelper*)getErrorString(status));
+  }
 }
 
-void palyAudio()
-{
-    vTaskResume(xHandleAudio);
-    audio.loop();
+// 
+void sendDeactivationMessage() {
+  const char* activeMsg = "Deact-FRS";
+  uint8_t status = mesh.sendtoWait((uint8_t*)activeMsg, strlen(activeMsg) + 1, RH_BROADCAST_ADDRESS);
+  if (status == RH_ROUTER_ERROR_NONE) {
+      Serial.println("Deactivation message sent successfully");
+  } 
+  else {
+      Serial.print("Failed to send Deactivation message, error: ");
+      Serial.println(status);
+      Serial.println((const __FlashStringHelper*)getErrorString(status));
+  }
+}
+
+void rgbTask(void *parameter) {
+    Serial.println("rgbTask started");
+    while (true) {
+        if(activateRGBflag) {
+            // Serial.println("rgbTask Running");
+            ActivateRGBs(true, true);
+        }
+        else if (!activateRGBflag) {
+            ActivateRGBs(false);
+
+            // FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB1, CRGB::White);
+            FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2, CRGB::White);
+            FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB3, CRGB::White);
+            FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+            FillSolidLeds(SideLEDs, NUM_LEDS_RGB5, CRGB::White);
+        }
+        delay(10);
+    }
+    Serial.println("rgbTask completed");
+    Serial.println("rgbTask suspended");
+    vTaskSuspend(xHandleRGB);
+}
+
+void soundTask(void *parameter) {
+    Serial.println("soundTask started");
+    while (true) {
+        if(activateSoundflag) {
+            // Check if audio is playing
+            if (audio.isRunning()) {
+                // Serial.println("Audio is playing");
+                delay(10);
+            }
+            else {
+                digitalWrite(SirenPIN, HIGH);
+                // delay(6000);
+                digitalWrite(SirenPIN, LOW);
+                Serial.println("Audio has stopped, Restarting audio");
+                audio.connecttoFS(SD, filename); // SD card file
+                // audio.loop();
+            }
+            audio.loop();
+        }
+        else if (!activateSoundflag) {
+            digitalWrite(SirenPIN, LOW); // stop siren
+            if (audio.isRunning()) {
+                audio.stopSong(); // stop audio
+            }
+            delay(10);
+        }
+    }
+    Serial.println("soundTask completed");
+    Serial.println("soundTask suspended");
+    vTaskSuspend(xHandleSound);
+}
+
+void deactivateFromButton() {
+    if (evacuationActivefromBTN) {
+        Serial.println("deactivate site evacuation with Button");
+        evacuationActivefromBTN = false;
+        // send message to other nodes to stop site evacuation
+        sendDeactivationMessage();
+    }
+
+    if (evacuationActivefromLCD) {
+        Serial.println("deactivate site evacuation with LCD");
+        evacuationActivefromLCD = false;
+        // send message to other nodes to stop site evacuation
+        sendDeactivationMessage();
+    }
+
+    if(evacuationActivefromLoRa) {
+        Serial.println("deactivate site evacuation with LoRa");
+        evacuationActivefromLoRa = false;
+        Display_AC_DEAC_Icon(0x01); // 01 show site evacuation button
+    }
+
+    delay(5);
+    ActivateRGBs(false); // deactivate leds
+    delay(10);
+    vTaskSuspend(xHandleRGB); // stop leds
+    delay(10);
+    vTaskSuspend(xHandleSound); // stop sound
+
+    digitalWrite(SirenPIN, LOW); // stop siren
+    delay(5);
+    if (audio.isRunning()) {
+        audio.stopSong(); // stop audio
+    }
+    delay(10);
+
+    // FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB1, CRGB::White);
+    FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB2, CRGB::White);
+    FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB3, CRGB::White);
+    FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB4, CRGB::White);
+    FillSolidLeds(SideLEDs, NUM_LEDS_RGB5, CRGB::White);
+
+    pageSwitch(HOME_PAGE);
+    Serial.println("Page Switched");
+    delay(5);
+    slideShowFlag = false;
+    vTaskResume(xHandledatetime);
+
+    Serial.println("deactivate site evacuation done");
+
+}
+
+void sendSMS() {
+    if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
+    HTTPClient http;
+
+    // Your Domain name with URL path or IP address with path
+    http.begin(serverName);
+
+    // If you need Node-RED/server authentication, insert user and password below
+    //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
+
+    String recv_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2F1dGg6ODA4MC9hcGkvdjEvdXNlcnMvYXBpL2tleXMvZ2VuZXJhdGUiLCJpYXQiOjE3MTc1MTA4OTgsIm5iZiI6MTcxNzUxMDg5OCwianRpIjoiSWxhQTBsQUJkVGVQUlF4NiIsInN1YiI6NDU3ODYxLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.KutM0gVPFasjWkOgsBhKU5jpklH_U8mhpEZ3qraCBHE";  // Complete Bearer token
+    recv_token = "Bearer " + recv_token;    // Adding "Bearer " before token
+
+    // If you need an HTTP request with a content type: application/json, use the following:
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Authorization", recv_token);
+    int httpResponseCode = http.POST("{\"message\":\"ALERT! A Fyrebox unit has been activated. Please assess and follow the emergency procedure once verified.\",\"to\":\"+27826450230\",\"bypass_optout\": true,\"sender_id\":\"Fyrebox\",\"callback_url\": \"\"}");
+
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+
+    if (httpResponseCode > 0) {
+      String payload = http.getString();
+      Serial.println(payload);
+    } 
+    else {
+      Serial.print("Error code: ");
+      Serial.println(httpResponseCode);
+    }
+    // Free resources
+    http.end();
+  } 
+  else {
+    Serial.println("WiFi Disconnected");
+  }
 }
 
 // FOTA functions
-int FirmwareVersionCheck()
-{
+int FirmwareVersionCheck() {
     String payload;
     int httpCode;
     String fwurl = "";
@@ -4803,26 +4732,22 @@ int FirmwareVersionCheck()
     Serial.println(fwurl);
     WiFiClientSecure *client = new WiFiClientSecure;
 
-    if (client)
-    {
+    if (client) {
         client->setCACert(OTA_CAcert);
 
         // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure *client is
         HTTPClient https;
 
-        if (https.begin(*client, fwurl))
-        { // HTTPS
+        if (https.begin(*client, fwurl)) { // HTTPS
             Serial.print("[HTTPS] GET...\n");
             // start connection and send HTTP header
             delay(100);
             httpCode = https.GET();
             delay(100);
-            if (httpCode == HTTP_CODE_OK) // if version received
-            {
+            if (httpCode == HTTP_CODE_OK) { // if version received 
                 payload = https.getString(); // save received version
             }
-            else
-            {
+            else {
                 Serial.print("error in downloading version file:");
                 Serial.println(httpCode);
             }
@@ -4831,23 +4756,19 @@ int FirmwareVersionCheck()
         delete client;
     }
 
-    if (httpCode == HTTP_CODE_OK) // if version received
-    {
+    if (httpCode == HTTP_CODE_OK) { // if version received
         payload.trim();
         Serial.print("File Version: ");
         Serial.println(payload);
-        if (payload.toFloat() > FirmwareVer.toFloat())
-        {
+        if (payload.toFloat() > FirmwareVer.toFloat()) {
             Serial.printf("\nDevice already on latest firmware version:%s\n", FirmwareVer);
             return 0;
         }
-        else if (payload.equals(FirmwareVer))
-        {
+        else if (payload.equals(FirmwareVer)) {
             Serial.printf("\nDevice already on latest firmware version:%s\n", FirmwareVer);
             return 0;
         }
-        else
-        {
+        else {
             Serial.println(payload);
             Serial.println("New firmware detected");
             return 1;
@@ -4856,14 +4777,12 @@ int FirmwareVersionCheck()
     return 0;
 }
 
-void firmwareUpdate()
-{
+void firmwareUpdate() {
     WiFiClientSecure ota_client;
     ota_client.setCACert(OTA_CAcert);
     t_httpUpdate_return ret = httpUpdate.update(ota_client, URL_fw_Bin);
 
-    switch (ret)
-    {
+    switch (ret) {
     case HTTP_UPDATE_FAILED:
         Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
         break;
@@ -4878,15 +4797,12 @@ void firmwareUpdate()
     }
 }
 
-void OTA_repeatedCall()
-{
+void OTA_repeatedCall() {
     unsigned long OTA_currentMillis = millis();
-    if ((OTA_currentMillis - OTA_previousMillis) >= OTA_interval)
-    {
+    if ((OTA_currentMillis - OTA_previousMillis) >= OTA_interval) {
         // save the last time you blinked the LED
         OTA_previousMillis = OTA_currentMillis;
-        if (FirmwareVersionCheck())
-        {
+        if (FirmwareVersionCheck()) {
             firmwareUpdate();
         }
     }

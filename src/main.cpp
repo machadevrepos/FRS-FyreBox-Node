@@ -9,7 +9,7 @@ Firmware Details
 
 Implemented:
 
-- LoRa Task: Pinned to Core 1 to frequently update the mesh network.
+- LoRa Task: To frequently update the mesh network. (Only Node discovery)
 - Task Management:
   - All tasks are suspended except for the login task.
   - Upon completion of the login task, the device configuration task is initiated.
@@ -19,6 +19,14 @@ Implemented:
 
   - If the LoRa module is not found, the system will remain in a loop and retry until the module is detected.
   - If the RTC module is not found, the system will remain in a loop and retry until the module is detected.
+
+- Added activation and deactivation
+  - if you activate the alarm from button it should be deactivated from button of same node
+  - if you activate the alarm from lcd it should be deactivated from lcd of same node 
+- If activated ring bell for 6 sec and play audio both in a loop until deactivated accordingly
+- Integrated RGBs
+- Activate and deactivate other nodes through LoRa
+- Send messages to visitors
 
 Mesh Network Development:
 
@@ -30,14 +38,14 @@ Flow:
 - The mesh network program is identical for all nodes in the network:
   - Each node listens to other nodes in a loop.
   - Each node updates the activity status of other nodes every 10 seconds.
-  - Each node broadcasts a message every 30 seconds.
-  - Each node prints network stats every 60 seconds.
+  - Each node broadcasts a message every 5 seconds.
+  - Each node prints network stats every 20 seconds.
 
 Tests:
 
 - The network consists of 4 nodes:
   - Each node knows how many nodes are available, active, and dead in its network.
-  - Each node successfully updates its node info container every 60 seconds.
+  - Each node successfully updates its node info container every 10 seconds.
   - Note: There is no acknowledgment message for broadcasted messages.
 
 PlatformIO Configuration:
@@ -50,12 +58,10 @@ monitor_speed = 115200
 
 Escalator Node:
 
-- The AUX pin of the LoRa module is NOT connected to the ESP32.
 - The relay is active low, with an LED connected in series with the relay.
 
 FyreBox Node:
 
-- The AUX pin of the LoRa module is NOT connected to the ESP32 S3 Mini.
 - Serial0: Used for program uploading and debugging.
 - Serial1: DWIN LCD is connected at IO15 (TX of LCD) and IO16 (RX of LCD).
 - LoRa Module: Connected at IO35 (RX) and IO36 (TX) using software serial.
@@ -63,28 +69,25 @@ FyreBox Node:
 
 TODO:
 
-  - Integrate RGBs
-  - Activate and deactivate other nodes
-  - Send messages to visitors
+  - Activate screen saver slide show after 6 sec of inactivity
 
 DONE:
 
-    - playing site evacuation audio in a loop
-    - Added button activation and deactivation
-      - if you activate the alarm from button it should be deactivated from button after slideshow
-      - if you activate the alarm from lcd it should be deactivated from lcd after slideshow
+  - Added Firmware update Over-The-Air (FOTA)
 
-  // sreen saver slide show:
-    // fyrebox logo for 5 seconds,
-    // client's logo for 10 seconds,
-    // 15 seconds site evacuation diagram
-  // evacuation slide show:
-    // Evacuation diagram - 30sec
-    // Evacuation procedure - 15sec
-    // ALL IN A LOOP UNTIL DEACTIVATED
-  // site map and local map working (we can change picture later)
-  // self test audio testing (problem resolved)
-  // site evacuation audio testing (done)
+EXTRA:
+
+  // 24 X LEDs for each of the sides - so 24x 2 (each side). Always on in white. Activation, flashing red. (48 total)
+
+  // 3  X LEDS for the big hexagon (always on in white) always on (3 total)
+
+  // 12  X LEDS small hexagon (always on, always white) activation flashing red, same as the sides. (12 total)
+
+  // 3 X LEDs per arrow (6 in total for both arrows) white normally then on activation the directional arrow turns red and runs (6 total)
+
+  // 18 X LEDs for the alarm call point sign - always white, always on (18 total)
+
+  // 24 X LEDs for the FIRE sign (always RED, always on. flashing red on activation) (24 total)
 
 */
 
@@ -98,35 +101,32 @@ DONE:
 #include <OTA_cert.h>
 
 // Initialize and define SoftwareSerial object
-SoftwareSerial SerialGPS(GPSRXPin, GPSTXPin);        // not currently used
+SoftwareSerial SerialGPS(GPSRXPin, GPSTXPin); // Not currently used
 SoftwareSerial LoRaSerial(LORA_TX_PIN, LORA_RX_PIN); // ESP32(RX), ESP32(TX)
 
 // Setup Function: Call Once when Code Starts
-void setup()
-{
-  // Start the Serial Communication with PC
-  Serial.begin(115200);
+void setup() {
+  Serial.begin(115200); // Start the Serial Communication with PC 
   Serial.println("Debug Serial is ready.");
 
-  Serial.print(" Active Firmware version:");
+  Serial.println("NODEID: " + String(NODEID));
+
+  Serial.print("Active Firmware version: ");
   Serial.println(FirmwareVer);
 
-  // Start the Serial Communication with DWIN LCD
-  Serial1.begin(115200, SERIAL_8N1, DWIN_TX_PIN, DWIN_RX_PIN);
+  Serial1.begin(115200, SERIAL_8N1, DWIN_TX_PIN, DWIN_RX_PIN); // Start the Serial Communication with DWIN LCD 
   Serial.println("Serial1 is ready.");
 
-  // Start the Serial Communication with LoRa module
-  LoRaSerial.begin(9600);
+  LoRaSerial.begin(9600); // Start the Serial Communication with LoRa module
   Serial.println("LoRaSerial is ready.");
 
   // Init driver(LoRa E32) and mesh manager
   Serial.println("Initializing mesh");
-  while (!initializeMESH())
-  { // stays in a loop until LoRa found
+  while(! initializeMESH()){  // stays in a loop until LoRa found 
     Serial.println("Mesh initialization failed");
     Serial.println("Retyring...");
     delay(3000);
-  }
+   }
   Serial.println("Mesh initialized successfully.");
 
   // RTC pins for ESP32-S3-Mini
@@ -135,8 +135,7 @@ void setup()
 
   // Mandatory for gps task
   Serial.println("Initializing RTC");
-  while (!rtc.begin())
-  { // stays in a loop until RTC found
+  while (!rtc.begin()){ // stays in a loop until RTC found 
     Serial.println("Couldn't find RTC");
     Serial.println("Retyring...");
     delay(3000);
@@ -146,23 +145,18 @@ void setup()
   // This line sets date and time on RTC (year, month, date, hour, min, sec)
   // rtc.adjust(DateTime(2024, 5, 25, 16, 16, 0));
 
-  // Led Setup
-  setupLeds();
-  // stableWhite(SideLEDs, NUM_LEDS_RGB6);
-
+  setupLeds(); // Led Setup
+  
   pinMode(SirenPIN, OUTPUT); // Declare siren bell pin as output
 
   // SIG pin must be HIGH for the sdcard to connect with the DWIN LCD
   pinMode(SIGPIN, OUTPUT); // Declare signal pin as output
-  // digitalWrite(SIGPIN, HIGH); // commented to connect sd card with ESP32
+  // digitalWrite(SIGPIN, HIGH); // commented to connect sd card with ESP32 
 
-  pinMode(siteEvacuation_buttonPin, INPUT_PULLUP);
+  pinMode(siteEvacuation_buttonPin, INPUT_PULLUP); // Declare button pin as input and enable internal pull up
 
-  EEPROM.begin(512);                       // Initialize EEPROM
+  EEPROM.begin(512); // Initialize EEPROM
   preferences.begin("credentials", false); // Open Preferences with "credentials" namespace
-  delay(5);
-  pageSwitch(COPYRIGHT); // Switch to Copyright Page
-  Serial.println("Page Switched");
   delay(5);
 
   // SD card configuration
@@ -171,26 +165,53 @@ void setup()
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
   SD.begin(SD_CS);
 
-  initAudio(); // initialize audio
+  // initAudio(); // initialize audio
 
-  xTaskCreatePinnedToCore(LoRatask, "LoRatask", 4096, NULL, 1, &xHandleLoRa, 1);
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(21);                     // default 0...21
 
-  xTaskCreate(loginTask, "LoginTask", 8192, NULL, 2, &xHandlelogin);
+  setCpuFrequencyMhz(240);
+  audioSemaphore = xSemaphoreCreateBinary(); 
+
+  delay(1000);
+  
+  // To perform login
+  xTaskCreate(loginTask, "LoginTask", 8192, NULL, 1, &xHandlelogin);
+
+  // To configure device
+  xTaskCreate(configuredeviceTask, "ConfigureDeviceTask", 4096, NULL, 2, &xHandleconfigdevice);
+  vTaskSuspend(xHandleconfigdevice);
+
+  // To update date and time info
+  xTaskCreate(dateTimeTask, "DateTimeTask", 2048, NULL, 3, &xHandledatetime);
+  vTaskSuspend(xHandledatetime);
+
+  // To handle home page tasks
+  xTaskCreate(homepageTasks, "HomepageTasks", 10000, NULL, 9, &xHandlehomepage);
+  vTaskSuspend(xHandlehomepage);
+
+  // To handle node discovery
+  xTaskCreate(LoRatask, "LoRatask", 10000, NULL, 10, &xHandleLoRa);
+  vTaskSuspend(xHandleLoRa);  
+
+  // To handle button activation and deactivation
+  xTaskCreate(buttonTask, "buttonTask", 10000, NULL, 8, &xHandleButton);
+  vTaskSuspend(xHandleButton);
+
+  // To receive messages on LoRa
+  xTaskCreate(RecvMessageTask, "RecvMessageTask", 10000, NULL, 8, &xHandleRecmessage);
+  vTaskSuspend(xHandleRecmessage);
+
+  // To run leds in infinite loop upon activation
+  xTaskCreate(rgbTask, "rgbTask", 10000, NULL, 9, &xHandleRGB);
+  vTaskSuspend(xHandleRGB);
+
+  // To play audio and siren bell in infinite loop upon activation
+  xTaskCreate(soundTask, "soundTask", 10000, NULL, 9, &xHandleSound);
+  vTaskSuspend(xHandleSound);
 
   // xTaskCreate(checkGPSTask, "CheckGPS", 2048, NULL, 1, &xHandlegps);
   // vTaskSuspend(xHandlegps);
-
-  xTaskCreate(dateTimeTask, "DateTimeTask", 2048, NULL, 4, &xHandledatetime);
-  vTaskSuspend(xHandledatetime);
-
-  xTaskCreate(configuredeviceTask, "ConfigureDeviceTask", 4096, NULL, 3, &xHandleconfigdevice);
-  vTaskSuspend(xHandleconfigdevice);
-
-  xTaskCreate(homepageTasks, "HomepageTasks", 4096, NULL, 1, &xHandlehomepage);
-  vTaskSuspend(xHandlehomepage);
-
-  xTaskCreate(audioTask, "AudioTask", 10000, NULL, 5, &xHandleAudio);
-  // vTaskSuspend(xHandleAudio);
 
   // resetVP(CLIENT_SSID);
   resetVP(VP_UNIT_DATE);
@@ -246,104 +267,28 @@ void setup()
   resetVP(notificationStatus2);
   resetVP(notificationStatus3);
   resetVP(notificationStatus4);
-  delay(100);
+  delay(50);
 
-  activateSlideShow = true;
+  pageSwitch(COPYRIGHT); // Switch to Copyright Page
+  Serial.println("Page Switched");
+  delay(5);
 
-  setCpuFrequencyMhz(240);
-  audioSemaphore = xSemaphoreCreateBinary();
-
-  // Only for testing of checklists data entery
-  // EEPROM.write(EEPROMAddress, 0);
-  // EEPROM.commit(); // Commit changes
-
-  // Only for testing of configureInternet();
-  // preferences.putString("internetSSID", " ");
-  // preferences.putString("internetPass", " ");
-
-  // Only for testing of configureLogin();
-  // removeClientCredentials();
-  // removeAdminCredentials();
-  /*
-    // only for testing
-    bool wifiConnected = false;
-
-    // String ssid = "FRS";
-    // String password = "frspassword";
-    // String ssid = "Machadev";
-    // String password = "13060064";
-    // String ssid = "Redmi Note 12";
-    // String password = "11223344";
-
-
-    WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-
-    while (true)
-    {
-      if (WiFi.status() == WL_CONNECTED)
-      {
-        wifiConnected = true;
-        Serial.println("Wifi Connected");
-        break;
-      }
-      else
-      {
-        Serial.println("Connecting to Wifi...");
-        delay(500);
-      }
-    }
-
-    Serial.println("Audio Downloading");
-    download_audio();
-    Serial.println("Audio Downloaded Completed");
-    */
 }
 
 // Run Code in Loop
 void loop()
 {
-  /*
-  while(1){
-    FillSolidLeds(SideLEDs, NUM_LEDS_RGB6, CRGB::White);
-    delay(1000);
-    FillSolidLeds(SideLEDs, NUM_LEDS_RGB6, CRGB::Black);
-    delay(1000);
-
-    FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB5, CRGB::Red);
-    delay(1000);
-    FillSolidLeds(RightArrowLEDs, NUM_LEDS_RGB5, CRGB::Black);
-    delay(1000);
-
-    FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB4, CRGB::Red);
-    delay(1000);
-    FillSolidLeds(LeftArrowLEDs, NUM_LEDS_RGB4, CRGB::Black);
-    delay(1000);
-
-    FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB3, CRGB::Green);
-    delay(1000);
-    FillSolidLeds(SmallHexagonsAndFireLEDs, NUM_LEDS_RGB3, CRGB::Black);
-    delay(1000);
-
-    FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB2, CRGB::Blue);
-    delay(1000);
-    FillSolidLeds(BigHexagonAndAlarmCallPointLEDs, NUM_LEDS_RGB2, CRGB::Black);
-    delay(1000);
-
-  }*/
-
   // **************** Main Code starts here !!!!! ******************* //
   OTA_repeatedCall();
 
   DateTime now = rtc.now();
 
-  day = DAY.toInt();
-  month = MONTH.toInt();
+  day = DAY.toInt(); 
+  month = MONTH.toInt(); 
   year = YEAR.toInt();
 
   weekByMonth = getWeekNumberByMonth(day, month, year); // returns int (number of weeks in a month 1 to 4)
-  weekByYear = getWeekNumberByYear(day, month, year);   // returns int (number of weeks in a year 1 to 54)
+  weekByYear = getWeekNumberByYear(day, month, year); // returns int (number of weeks in a year 1 to 54)
 
   int currentWeekByMonth = weekByMonth + 1;
   // Serial.println("Week passed by month: "+weekByMonth);
@@ -352,4 +297,6 @@ void loop()
   int currentWeekByYear = weekByYear + 1;
   // Serial.println("Week passed by year: "+weekByYear);
   // Serial.println("Current Week by year: "+currentWeekByYear);
+  
 }
+

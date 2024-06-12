@@ -8,7 +8,11 @@
 
 #include "constant.h"
 
-TaskHandle_t xHandleAudio;
+TaskHandle_t xHandleButton;
+TaskHandle_t xHandleRecmessage;
+TaskHandle_t xHandleRGB;
+TaskHandle_t xHandleSound;
+TaskHandle_t xHandleSlideshow;
 TaskHandle_t xHandleLoRa;
 TaskHandle_t xHandlegps;
 TaskHandle_t xHandledatetime;
@@ -91,6 +95,8 @@ const String uniqueButtonDigits = "1101";
 // const String predefinedInternetPassword = "13060064";
 const String predefinedInternetSSID = "Redmi Note 12";
 const String predefinedInternetPassword = "11223344";
+// const String predefinedInternetSSID = "Machadev";
+// const String predefinedInternetPassword = "Machadev321";
 const String showPassword = "103";
 const String hidePassword = "102";
 
@@ -327,7 +333,7 @@ const int Prev_page5 = 65;
 
 // RTC
 unsigned long lastActivityTime = 0;
-const unsigned long idleTimeout = 30000; // 30 seconds
+const unsigned long idleTimeout = 10000; // 10 seconds
 
 // Database Parameters
 const String getOrgId = "2";
@@ -465,7 +471,9 @@ const int NOTIFICATION_PAGE = 0x0018;
 const int LOCALMAP_PAGE = 0x002A; 
 const int SITEMAP_PAGE = 0x0016; 
 const int EVACUATION_PROCEDURE_PAGE = 0x0017;
-const int CLIENT_LOGO = 0x002B;
+const int CLIENT_LOGO_BROLL = 0x002B;
+const int CLIENT_LOGO_SUN = 0x002C;
+const int CLIENT_LOGO_SERVEST = 0x002D;
 
 // Flags
 bool clientLogin = false;
@@ -482,7 +490,6 @@ bool arrowFlags = false;
 bool displayIconsFlag = false;
 bool checkBoxFlag = false;
 bool FyreBoxUnitListFlag = false;
-bool activateSlideShow = false;
 bool slideShowFlag = false;
 bool ConfigureDeviceFlag = false;
 bool dataEnteredtoday = false;
@@ -510,9 +517,11 @@ const int SIGPIN = 5;
 // Pins for LoRa Mesh
 const int MOPIN = 39;
 const int M1PIN = 38;
-const int AUXPIN = 37;
-const int RLYPIN = 21;
-const int NODEID = 1;
+const int AUXPIN = 26;
+// const int NODEID = 1; // sun
+// const int NODEID = 2; // servest
+const int NODEID = 3; // broll
+
 // variables to keep track of each node
 int totalNodes = 0;
 int activeNodes = 0;
@@ -604,16 +613,12 @@ const String ReturnKeyCode_Active_Prev = "1102";
 const String ReturnKeyCode_Inactive_Next = "1103";
 const String ReturnKeyCode_Inactive_Prev = "1104";
 
-
-// RGB LED configuration
-// const int DATA_PIN_RGB1 = 21;
-// const int DATA_PIN_RGB2 = 26;
-// const int DATA_PIN_RGB3 = 47;
-// const int DATA_PIN_RGB4 = 33;
-// const int DATA_PIN_RGB5 = 34;
-// const int DATA_PIN_RGB6 = 20;
-// const int NUM_LEDS = 8;
-// const int RGB_LED_BRIGHTNESS = 10;
+unsigned long long millis_blink_rgb, millis_move_rgb = 0;
+int blink_speed = 500;
+int move_speed = 5;
+int move_id = 0;
+bool prev_blink_color = false;
+unsigned long SECOND_TO_MILLIS = 1000;
 
 // Digital I/O used for SD Card
 const int SPI_MOSI  = 11;
@@ -627,9 +632,6 @@ const int I2S_DOUT = 18;
 const int I2S_LRC = 19;
 
 // Audio Data
-// const char *resourceURL = "https://github.com/asif8270/audioWav/raw/main/emergency.mp3";
-// const char *filename = "/emergency.mp3";
-
 const char *resourceURL ="https://github.com/musman5921/audio/raw/main/Fyrebox_-_Fyrebox_Alarm_with_Siren.mp3";
 const char *filename = "/Fyrebox_-_Fyrebox_Alarm_with_Siren.mp3";
 const char *resourceURL2 ="https://github.com/musman5921/audio/raw/main/Fyrebox_-_Fyrebox_Alarm_VO_TEST.mp3";
@@ -637,16 +639,20 @@ const char *filename2 = "/Fyrebox_-_Fyrebox_Alarm_VO_TEST.mp3";
 
 const int SirenPIN = 4;
 
-const int siteEvacuation_buttonPin = 21; // Pin where the push button is connected
+const int siteEvacuation_buttonPin = 21; // Pin where the button is connected
 
-// button memory variables
-int buttonState = HIGH; // Current state of the button (initially not pressed, because INPUT_PULLUP)
-int lastButtonState = HIGH; // Previous state of the button (initially not pressed)
-bool evacuationActive = false; // Flag to track if evacuation is active
+bool evacuationActivefromLCD = false; // Flag to track if evacuation is active from lcd
+bool evacuationActivefromBTN = false; // Flag to track if evacuation is active from button
+bool evacuationActivefromLoRa = false; // Flag to track if evacuation is active from LoRa
+bool activatedByLoRa = false; // True when activate message is received, false when deactivate message is received
+bool activateRGBflag = false;
+bool activateSoundflag = false;
 
-unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
-unsigned long debounceDelay = 50; // the debounce time; increase if the output flickers
+// For sms 
+// Your Domain name with URL path or IP address with path
+String serverName = "https://api.sms.to/sms/send";
 
+// For FOTA
 String FirmwareVer = {"1.0"}; //Current Firmware version
 unsigned long OTA_previousMillis = 0;
 const long OTA_interval = 60000; //Interval for checking OTA

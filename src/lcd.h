@@ -21,8 +21,6 @@
 #include "Audio.h"
 #include "esp32-hal-cpu.h"
 #include "freertos/semphr.h"
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
 #include <Adafruit_Sensor.h>
 #include <HardwareSerial.h>
 #include <HTTPUpdate.h>
@@ -92,7 +90,7 @@ String readOneData(uint16_t ssidCommand);
 void performLoginCheck(bool &clientLogin, bool &adminLogin);
 void readPage();
 void pageSwitch(byte pageNo);
-void DisplayDeactivateIcon();
+void Display_AC_DEAC_Icon(byte iconNo);
 void systemReset();
 bool compareCredentials(String ssid, String password);
 bool compareInternetCredentials(String ssid, String password);
@@ -127,6 +125,7 @@ void unitDetails();
 void devicesDirectionDetails();
 void slideShow();
 void slideShow_EvacuationDiagrams();
+void slideShow_EvacuationDiagrams_forButton();
 void homepageTasks(void *parameter);
 void CheckBoxes();
 void displayIcons();
@@ -159,34 +158,28 @@ void printNodeStatuses();
 void printNetworkStats();
 
 // Led functions
-void setupLeds(); // used
-// void setAllLedsRed(); 
-// void setAllLedsBlue();
-// void setAllLedsGreen();
-// void setAllLedYellow();
-// void setAllLedWhite(); 
-// void turnOffAllLeds();
-// void stableWhite(); 
-// void stableRed();
-// void stableGreen();
-// void stableBlue();
-// void stableYellow();
-// void led_blink(uint8_t red_intensity, uint8_t green_intensity, uint8_t blue_intensity);
-
+void setupLeds();
 void FillSolidLeds(struct CRGB * targetArray, int numToFill, const struct CRGB& color);
+void ActivateRGBs(bool activate, bool dir = false);
+void BlinkLeds(int duration);
+void RgbArrowMove(bool dir, uint8_t speed);
 
 void initAudio();
 void download_audio();
 void sd_card();
 void downloadFile(const char *resourceURL, const char *filename);
-void audioTask(void * parameter);
-void startSiren();
-void stopSiren();
-void palyAudio();
+void buttonTask(void * parameter);
+void RecvMessageTask(void *parameter);
+void sendActivationMessage();
+void sendDeactivationMessage();
+void rgbTask(void *parameter);
+void soundTask(void *parameter);
+void deactivateFromButton();
+void sendSMS();
 
+// FOTA functions
 int FirmwareVersionCheck(void);
 void firmwareUpdate(void);
 void OTA_repeatedCall();
-
 
 #endif // LCD_H
