@@ -657,4 +657,4 @@ String FirmwareVer = {"1.1"}; //Current Firmware version
 unsigned long OTA_previousMillis = 0;
 const long OTA_interval = 60000; //Interval for checking OTA
 String URL_fw_Version = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/firmware_version.txt";
-String URL_fw_Bin = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/.pio/build/esp32-s3-devkitm-1//firmware.bin";
+String URL_fw_Bin = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/.pio/build/esp32-s3-devkitm-1/firmware.bin";
