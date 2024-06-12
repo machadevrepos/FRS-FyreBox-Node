@@ -73,21 +73,19 @@ TODO:
 
 DONE:
 
-  - Added Firmware update Over-The-Air (FOTA)
+  - Added Firmware update Over-The-Air (FOTA) in FyreBox Node
+  - Update the firmware version number in the `FirmwareVer` constant in the `constant.cpp` file and in the `firmware_version.txt` file, 
+  - then compile/build the firmware then push the changes to the `FRS-FyreBox-Node` public repository owned by `machadevrepos`.
+  - The node then downloads the latest version from GitHub, uploads it to the ESP32, and reboots. This process takes 1 to 2 minutes.
 
 EXTRA:
 
-  // 24 X LEDs for each of the sides - so 24x 2 (each side). Always on in white. Activation, flashing red. (48 total)
-
-  // 3  X LEDS for the big hexagon (always on in white) always on (3 total)
-
-  // 12  X LEDS small hexagon (always on, always white) activation flashing red, same as the sides. (12 total)
-
-  // 3 X LEDs per arrow (6 in total for both arrows) white normally then on activation the directional arrow turns red and runs (6 total)
-
-  // 18 X LEDs for the alarm call point sign - always white, always on (18 total)
-
-  // 24 X LEDs for the FIRE sign (always RED, always on. flashing red on activation) (24 total)
+  - 24 X LEDs for each of the sides - so 24x 2 (each side). Always on in white. Activation, flashing red. (48 total)
+  - 3  X LEDS for the big hexagon (always on in white) always on (3 total)
+  - 12  X LEDS small hexagon (always on, always white) activation flashing red, same as the sides. (12 total)
+  - 3 X LEDs per arrow (6 in total for both arrows) white normally then on activation the directional arrow turns red and runs (6 total)
+  - 18 X LEDs for the alarm call point sign - always white, always on (18 total)
+  - 24 X LEDs for the FIRE sign (always RED, always on. flashing red on activation) (24 total)
 
 */
 

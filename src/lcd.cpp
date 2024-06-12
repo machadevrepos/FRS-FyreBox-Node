@@ -574,12 +574,6 @@ void processWiFiCredentials(uint16_t ssid, uint16_t passwordCommand, uint16_t pa
 
     preferences.putString("internetPass", temppassword); // Save Password
 
-    // Only for debugging 
-    // String ssid = preferences.getString("admin_username", "");
-    // Serial.println("SSID: " + ssid);
-
-    // String pass = preferences.getString("admin_password", "");
-    // Serial.println("PASSWORD: " + pass);
 }
 
 String readOneData(uint16_t ssidCommand) {
@@ -660,7 +654,7 @@ bool compareCredentials(String ssid, String password) {
 }
 
 // Compare Internet
-bool compareInternetCredentials(String ssid, String password) { // Not used
+bool compareInternetCredentials(String ssid, String password) {
     return ssid == predefinedInternetSSID && password == predefinedInternetPassword;
 }
 
@@ -1091,7 +1085,7 @@ void loginTask(void *parameter) {
             Serial.println("Saved client password is: " + internetPassword);
 
             //  If ssid and password is available then auto connect
-            if (internetSSID == predefinedInternetSSID && internetPassword == predefinedInternetPassword) {
+            if (compareInternetCredentials(internetSSID, internetPassword)) {
                 pageSwitch(NOTIFICATION_PAGE);
 
                 String message1 = "Connecting to Wi-Fi";

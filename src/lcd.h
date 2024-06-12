@@ -139,12 +139,6 @@ void showMessage(uint16_t VP_ADDRESS, String displaymessage);
 void displayFyreBoxUnitList();
 void FyreBoxUnitList();
 
-// Not defined
-// void checkConnectButton();
-// String hexToText(const String& hexString);
-// void readTextFromDWIN();
-// void writeStringToDwin(uint16_t address, const String &data);
-
 // for LoRa Mesh 
 void LoRatask(void* parameter);
 const __FlashStringHelper* getErrorString(uint8_t status);
