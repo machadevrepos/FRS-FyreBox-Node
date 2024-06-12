@@ -91,10 +91,10 @@ const String showAdmin = "1102";
 const String switchUser = "2ec";
 const String uniqueButtonDigits = "1101";
 
-// const String predefinedInternetSSID = "Machadev";
-// const String predefinedInternetPassword = "13060064";
-const String predefinedInternetSSID = "Redmi Note 12";
-const String predefinedInternetPassword = "11223344";
+const String predefinedInternetSSID = "Machadev";
+const String predefinedInternetPassword = "13060064";
+// const String predefinedInternetSSID = "Redmi Note 12";
+// const String predefinedInternetPassword = "11223344";
 // const String predefinedInternetSSID = "Machadev";
 // const String predefinedInternetPassword = "Machadev321";
 const String showPassword = "103";
@@ -518,9 +518,9 @@ const int SIGPIN = 5;
 const int MOPIN = 39;
 const int M1PIN = 38;
 const int AUXPIN = 26;
-// const int NODEID = 1; // sun
+const int NODEID = 1; // sun
 // const int NODEID = 2; // servest
-const int NODEID = 3; // broll
+// const int NODEID = 3; // broll
 
 // variables to keep track of each node
 int totalNodes = 0;
@@ -653,7 +653,7 @@ bool activateSoundflag = false;
 String serverName = "https://api.sms.to/sms/send";
 
 // For FOTA
-String FirmwareVer = {"1.0"}; //Current Firmware version
+String FirmwareVer = {"1.1"}; //Current Firmware version
 unsigned long OTA_previousMillis = 0;
 const long OTA_interval = 60000; //Interval for checking OTA
 String URL_fw_Version = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/firmware_version.txt";
