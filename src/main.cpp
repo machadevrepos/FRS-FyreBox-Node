@@ -111,8 +111,7 @@ void setup() {
 
   Serial.println("NODEID: " + String(NODEID));
 
-  Serial.print("Active Firmware version: ");
-  Serial.println(FirmwareVer);
+  Serial.println("Active Firmware version: " + FirmwareVer);
 
   Serial1.begin(115200, SERIAL_8N1, DWIN_TX_PIN, DWIN_RX_PIN); // Start the Serial Communication with DWIN LCD 
   Serial.println("Serial1 is ready.");
