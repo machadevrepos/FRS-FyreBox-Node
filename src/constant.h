@@ -19,13 +19,14 @@ extern TaskHandle_t xHandleButton;
 extern TaskHandle_t xHandleRecmessage;
 extern TaskHandle_t xHandleRGB;
 extern TaskHandle_t xHandleSound;
-extern TaskHandle_t xHandleSlideshow;
+extern TaskHandle_t xHandlewifi;
 extern TaskHandle_t xHandleLoRa;
 extern TaskHandle_t xHandlegps;
 extern TaskHandle_t xHandledatetime;
 extern TaskHandle_t xHandlelogin;
 extern TaskHandle_t xHandleconfigdevice;
 extern TaskHandle_t xHandlehomepage;
+extern TaskHandle_t xHandlesms;
 
 extern String checkData;
 extern String datatocompare;
@@ -105,6 +106,13 @@ extern String dateOfUnitInstallation;
 extern String unitInstaller;
 extern String unitContactDetails;
 extern String ipAddress;
+
+extern String stringDeviceKey;
+extern int receivedDeviceKey;
+
+extern String FAULT_LOGGED_BY;
+extern String FAULT_DETAILS;
+
 extern const String Unit_Details_Upload;
 extern const String Unit_Details_Back;
 
@@ -137,7 +145,16 @@ extern const String previousONpage5;
 extern const String Home_Screen_Back;
 extern const String Home_Screen;
 
-extern const String batteryCalc;
+// Menu functions
+extern const String uploadPDF;
+extern const String setupUnit;
+extern const String supplierInfo;
+extern const String clientDetails;
+extern const String batteryCalculations;
+extern const String installationProcedure;
+extern const String maintenanceProcedure;
+extern const String weelyTesting;
+extern const String logFault;
 extern const String logout;
 
 extern unsigned char Buffer[10];
@@ -147,6 +164,7 @@ extern const int RESET;
 extern const int VP_CONNECT_BUTTON;
 extern const int CLIENT_SSID;
 extern const int CLIENT_PASSWORD;
+extern const int CLIENT_PASSWORD2;
 extern const int ADMIN_SSID;
 extern const int ADMIN_PASSWORD;
 extern const int LOGIN;
@@ -161,6 +179,7 @@ extern const int notificationStatus3;
 extern const int notificationStatus4;
 
 extern const int CLIENT_PASSWORD_DISPLAY;
+extern const int CLIENT_PASSWORD_DISPLAY2;
 extern const int CLIENT_PASSWORD_ICON;
 extern const int CLIENT_REMEMBER_LOGIN;
 extern const int ADMIN_PASSWORD_DISPLAY;
@@ -246,9 +265,28 @@ extern const int FYREBOXLOGO;
 extern const int CLIENT_LOGO_BROLL;
 extern const int CLIENT_LOGO_SUN;
 extern const int CLIENT_LOGO_SERVEST;
+extern const int PASSWORD_PAGE;
+extern const int BATTERYLOW_PAGE;
+extern const int BATTERY_CALC_PAGE;
+extern const int LOGAFAULT_PAGE;
+extern const int SUPPLIER_INFO_PAGE;
+extern const int CLIENT_DETAILS_PAGE;
+extern const int INSTALLATION_PROCEDURE_PAGE;
+extern const int MAINTENANCE_PROCEDURE_PAGE;
+extern const int UPDATE_DATE_TIME_PAGE;
+
+extern const int VP_FAULT_LOGGED_BY;
+extern const int VP_FAULT_DETAILS;
 
 extern const int VP_UNIT_DATE;
 extern const int VP_UNIT_TIME;
+
+extern const int VP_HOURS;
+extern const int VP_MINUTES;
+extern const int VP_SECONDS;
+extern const int VP_DATE;
+extern const int VP_MONTH;
+extern const int VP_YEAR;
 
 // Home page VPs
 extern const int show_Menu;
@@ -311,12 +349,6 @@ extern const int LOGBOOK_UPTODATE;
 extern const int FYREBOX_UNIT_WIPED_CLEAN;
 extern const int ANY_DAMAGE_BOX;
 extern const int ANY_RUST_UNIT;
-
-// Menu functions VP Addresses of return key code
-extern const int showMenuVP;
-extern const int hideMenuVP;
-extern const int uploadPDF_VP;
-extern const int batteryCalc_VP;
 
 // Check Boxes VP Addresses of Basic Graphic	
 extern const int basicGraphic_page1;
@@ -593,8 +625,9 @@ extern const String ReturnKeyCode_Inactive_Prev;
 #define NUM_LEDS_RGB4 3  // Right arrow
 #define NUM_LEDS_RGB5 48 // Left and Right side LEDs
 
-#define RGB_LED_BRIGHTNESS 10 // 0 to 255
-
+// #define RGB_LED_BRIGHTNESS 10 // 0 to 255
+extern const int RGB_LED_BRIGHTNESS_IDEAL; // 0 to 255
+extern const int RGB_LED_BRIGHTNESS_BATTERYMODE; 
 extern unsigned long long millis_blink_rgb, millis_move_rgb;
 extern int blink_speed;
 extern int move_speed;
@@ -628,8 +661,13 @@ extern bool evacuationActivefromLoRa;
 extern bool activatedByLoRa;
 extern bool activateRGBflag;
 extern bool activateSoundflag;
+extern bool deactivate;
+extern bool sendSMSflag;
+extern bool batterysaverflag;
 
 extern String serverName;
+extern const char* recipients[];
+extern const int numRecipients;
 
 // For FOTA
 extern String FirmwareVer; //Current Firmware version
@@ -637,5 +675,8 @@ extern unsigned long OTA_previousMillis;  // will store last time Firmware updat
 extern const long OTA_interval; //Interval for checking OTA
 extern String URL_fw_Version;
 extern String URL_fw_Bin;
+
+// For geolocation
+extern const char* googleApiKey;
 
 #endif // CONSTANTS_H

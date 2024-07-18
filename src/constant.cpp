@@ -12,13 +12,14 @@ TaskHandle_t xHandleButton;
 TaskHandle_t xHandleRecmessage;
 TaskHandle_t xHandleRGB;
 TaskHandle_t xHandleSound;
-TaskHandle_t xHandleSlideshow;
+TaskHandle_t xHandlewifi;
 TaskHandle_t xHandleLoRa;
 TaskHandle_t xHandlegps;
 TaskHandle_t xHandledatetime;
 TaskHandle_t xHandlelogin;
 TaskHandle_t xHandleconfigdevice;
 TaskHandle_t xHandlehomepage;
+TaskHandle_t xHandlesms;
 
 String checkData = "";
 String datatocompare = "";
@@ -86,6 +87,12 @@ String unitInstaller = "";
 String unitContactDetails = "";
 String ipAddress = "";
 
+String stringDeviceKey = "";
+int receivedDeviceKey = 0;
+
+String FAULT_LOGGED_BY = "";
+String FAULT_DETAILS = "";
+
 const String showClient = "1101";
 const String showAdmin = "1102";
 const String switchUser = "2ec";
@@ -95,6 +102,8 @@ const String predefinedInternetSSID = "Machadev";
 const String predefinedInternetPassword = "13060064";
 // const String predefinedInternetSSID = "Redmi Note 12";
 // const String predefinedInternetPassword = "11223344";
+// const String predefinedInternetSSID = "DELL";
+// const String predefinedInternetPassword = "12345678"; 
 // const String predefinedInternetSSID = "Machadev";
 // const String predefinedInternetPassword = "Machadev321";
 const String showPassword = "103";
@@ -145,8 +154,16 @@ const String Home_Screen_Back = "1101";
 const String Home_Screen = "1102";
 
 // Menu functions return key codes
-const String batteryCalc = "1107";
-const String logout = "110b";
+const String uploadPDF = "1103";
+const String setupUnit = "1104";
+const String supplierInfo = "1105";
+const String clientDetails = "1106";
+const String batteryCalculations = "1107";
+const String installationProcedure = "1108";
+const String maintenanceProcedure = "1109";
+const String weelyTesting = "110a";
+const String logFault = "110b";
+const String logout = "110c";
 
 const int RESET = 0x0;
 
@@ -155,6 +172,8 @@ unsigned char Buffer[10];
 const int CLIENT_SSID = 0x3100;
 const int CLIENT_PASSWORD = 0x3164;
 const int CLIENT_PASSWORD_DISPLAY = 0x2F38;
+const int CLIENT_PASSWORD2 = 0x51E4;
+const int CLIENT_PASSWORD_DISPLAY2 = 0x5248;
 const int CLIENT_PASSWORD_ICON = 0x31C8;
 const int CLIENT_REMEMBER_LOGIN = 0x31c9;
 
@@ -216,8 +235,18 @@ const int VP_UNIT_IP_ADDRESS = 0x3c33;
 
 const int VP_DEVICE_DRIVER_RETURN_KEY = 0x3e8b;
 
+const int VP_FAULT_LOGGED_BY = 0x52AC;
+const int VP_FAULT_DETAILS = 0x5310;
+
 const int VP_UNIT_DATE = 0x6100;
 const int VP_UNIT_TIME = 0x6000;
+
+const int VP_HOURS = 0x6201;
+const int VP_MINUTES = 0x6202;
+const int VP_SECONDS = 0x6203;
+const int VP_DATE = 0x6204;
+const int VP_MONTH = 0x6205;
+const int VP_YEAR = 0x6206;
 
 // Home page VPs
 const int show_Menu = 0x6211;
@@ -228,7 +257,6 @@ const int show_report = 0x6215;
 const int self_Test = 0x6216;
 const int checklists = 0x6217;
 const int start_SlideShow = 0x6218;
-
 
 // Check Boxes Memory Variables
 String controlFunction = "";
@@ -474,6 +502,15 @@ const int EVACUATION_PROCEDURE_PAGE = 0x0017;
 const int CLIENT_LOGO_BROLL = 0x002B;
 const int CLIENT_LOGO_SUN = 0x002C;
 const int CLIENT_LOGO_SERVEST = 0x002D;
+const int PASSWORD_PAGE = 0x002E;
+const int BATTERYLOW_PAGE = 0x002F;
+const int BATTERY_CALC_PAGE = 0x0026;
+const int LOGAFAULT_PAGE = 0x0033;
+const int SUPPLIER_INFO_PAGE = 0x0034;
+const int CLIENT_DETAILS_PAGE = 0x0035;
+const int INSTALLATION_PROCEDURE_PAGE = 0x0036;
+const int MAINTENANCE_PROCEDURE_PAGE = 0x0037;
+const int UPDATE_DATE_TIME_PAGE = 0x0038;
 
 // Flags
 bool clientLogin = false;
@@ -491,7 +528,7 @@ bool displayIconsFlag = false;
 bool checkBoxFlag = false;
 bool FyreBoxUnitListFlag = false;
 bool slideShowFlag = false;
-bool ConfigureDeviceFlag = false;
+bool ConfigureDeviceFlag = true; // true only for testing
 bool dataEnteredtoday = false;
 bool weekElapsed = false;
 bool APIresponseFlag = false;
@@ -518,9 +555,9 @@ const int SIGPIN = 5;
 const int MOPIN = 39;
 const int M1PIN = 38;
 const int AUXPIN = 26;
-const int NODEID = 1; // sun
+// const int NODEID = 1; // sun
 // const int NODEID = 2; // servest
-// const int NODEID = 3; // broll
+const int NODEID = 3; // broll
 
 // variables to keep track of each node
 int totalNodes = 0;
@@ -613,6 +650,8 @@ const String ReturnKeyCode_Active_Prev = "1102";
 const String ReturnKeyCode_Inactive_Next = "1103";
 const String ReturnKeyCode_Inactive_Prev = "1104";
 
+const int RGB_LED_BRIGHTNESS_IDEAL = 20; // 0 to 255
+const int RGB_LED_BRIGHTNESS_BATTERYMODE = 5;
 unsigned long long millis_blink_rgb, millis_move_rgb = 0;
 int blink_speed = 500;
 int move_speed = 5;
@@ -647,10 +686,22 @@ bool evacuationActivefromLoRa = false; // Flag to track if evacuation is active 
 bool activatedByLoRa = false; // True when activate message is received, false when deactivate message is received
 bool activateRGBflag = false;
 bool activateSoundflag = false;
+bool deactivate = false;
+bool sendSMSflag = false;
+bool batterysaverflag = false;
 
 // For sms 
 // Your Domain name with URL path or IP address with path
 String serverName = "https://api.sms.to/sms/send";
+const char* recipients[] = {
+    // "+27826450230", // Recipient 1 (South Africa)
+    "+2782XXXXXXX",   // Recipient 1 (South Africa)
+    "+923015921906", // Recipient 2 (Pakistan)
+    "+2782XXXXXXX",  // Recipient 3 (South Africa)
+    "+2782XXXXXXX", // Recipient 4 (South Africa)
+    "+2782XXXXXXX"   // Recipient 5 (South Africa)
+};
+const int numRecipients = 5;
 
 // For FOTA
 String FirmwareVer = {"1.1"}; //Current Firmware version
@@ -658,3 +709,7 @@ unsigned long OTA_previousMillis = 0;
 const long OTA_interval = 60000; //Interval for checking OTA
 String URL_fw_Version = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/firmware_version.txt";
 String URL_fw_Bin = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/.pio/build/esp32-s3-devkitm-1/firmware.bin";
+
+
+// For geolocation
+const char* googleApiKey = "your_google_geolocation_api_key";

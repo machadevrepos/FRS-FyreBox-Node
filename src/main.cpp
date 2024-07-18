@@ -139,8 +139,20 @@ void setup() {
   }
   Serial.println("RTC Initialized.");
 
+  // // Get the chip ID
+  // uint32_t chipId = ESP.getEfuseMac() & 0xFFFFFF; // Truncate to get a 24-bit unique ID
+
+  // Serial.print("Unique Device ID: ");
+  // Serial.println(chipId);
+
+  // // Get the MAC address
+  // String macAddress = WiFi.macAddress();
+
+  // Serial.print("MAC Address: ");
+  // Serial.println(macAddress);
+
   // This line sets date and time on RTC (year, month, date, hour, min, sec)
-  // rtc.adjust(DateTime(2024, 5, 25, 16, 16, 0));
+  // rtc.adjust(DateTime(2024, 6, 24, 15, 06, 0));
 
   setupLeds(); // Led Setup
   
@@ -165,7 +177,7 @@ void setup() {
   // initAudio(); // initialize audio
 
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-  audio.setVolume(21);                     // default 0...21
+  audio.setVolume(19);                     // default 0...21
 
   setCpuFrequencyMhz(240);
   audioSemaphore = xSemaphoreCreateBinary(); 
@@ -173,7 +185,7 @@ void setup() {
   delay(1000);
   
   // To perform login
-  xTaskCreate(loginTask, "LoginTask", 8192, NULL, 1, &xHandlelogin);
+  xTaskCreate(loginTask, "LoginTask", 5000, NULL, 1, &xHandlelogin);
 
   // To configure device
   xTaskCreate(configuredeviceTask, "ConfigureDeviceTask", 4096, NULL, 2, &xHandleconfigdevice);
@@ -184,31 +196,36 @@ void setup() {
   vTaskSuspend(xHandledatetime);
 
   // To handle home page tasks
-  xTaskCreate(homepageTasks, "HomepageTasks", 10000, NULL, 9, &xHandlehomepage);
+  xTaskCreate(homepageTasks, "HomepageTasks", 9000, NULL, 10, &xHandlehomepage);
   vTaskSuspend(xHandlehomepage);
 
   // To handle node discovery
-  xTaskCreate(LoRatask, "LoRatask", 10000, NULL, 10, &xHandleLoRa);
+  xTaskCreate(LoRatask, "LoRatask", 3072, NULL, 8, &xHandleLoRa);
   vTaskSuspend(xHandleLoRa);  
 
   // To handle button activation and deactivation
-  xTaskCreate(buttonTask, "buttonTask", 10000, NULL, 8, &xHandleButton);
+  xTaskCreate(buttonTask, "buttonTask", 3072, NULL, 8, &xHandleButton);
   vTaskSuspend(xHandleButton);
 
   // To receive messages on LoRa
-  xTaskCreate(RecvMessageTask, "RecvMessageTask", 10000, NULL, 8, &xHandleRecmessage);
+  xTaskCreate(RecvMessageTask, "RecvMessageTask", 2048, NULL, 8, &xHandleRecmessage);
   vTaskSuspend(xHandleRecmessage);
 
-  // To run leds in infinite loop upon activation
-  xTaskCreate(rgbTask, "rgbTask", 10000, NULL, 9, &xHandleRGB);
-  vTaskSuspend(xHandleRGB);
+  // Create the FreeRTOS task for checking internet connectivity
+  xTaskCreate(checkInternetTask, "Check Internet Task", 4096, NULL, 1, &xHandlewifi);
+  vTaskSuspend(xHandlewifi);
 
-  // To play audio and siren bell in infinite loop upon activation
-  xTaskCreate(soundTask, "soundTask", 10000, NULL, 9, &xHandleSound);
-  vTaskSuspend(xHandleSound);
+  // // To run leds in infinite loop upon activation
+  // xTaskCreate(rgbTask, "rgbTask", 10000, NULL, 9, &xHandleRGB);
+  // vTaskSuspend(xHandleRGB);
+
+  // // To play audio and siren bell in infinite loop upon activation
+  // xTaskCreate(soundTask, "soundTask", 10000, NULL, 9, &xHandleSound);
+  // vTaskSuspend(xHandleSound);
 
   // xTaskCreate(checkGPSTask, "CheckGPS", 2048, NULL, 1, &xHandlegps);
   // vTaskSuspend(xHandlegps);
+
 
   // resetVP(CLIENT_SSID);
   resetVP(VP_UNIT_DATE);
@@ -266,9 +283,10 @@ void setup() {
   resetVP(notificationStatus4);
   delay(50);
 
-  pageSwitch(COPYRIGHT); // Switch to Copyright Page
-  Serial.println("Page Switched");
-  delay(5);
+// commented only for testing
+  // pageSwitch(COPYRIGHT); // Switch to Copyright Page
+  // Serial.println("Page Switched");
+  // delay(5);
 
 }
 
@@ -276,7 +294,7 @@ void setup() {
 void loop()
 {
   // **************** Main Code starts here !!!!! ******************* //
-  OTA_repeatedCall();
+  // OTA_repeatedCall();
 
   DateTime now = rtc.now();
 
@@ -294,6 +312,57 @@ void loop()
   int currentWeekByYear = weekByYear + 1;
   // Serial.println("Week passed by year: "+weekByYear);
   // Serial.println("Current Week by year: "+currentWeekByYear);
+
+  // UBaseType_t uxHighWaterMark;
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandlelogin);
+  // Serial.print("Login Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandleconfigdevice);
+  // Serial.print("Configure Device Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandledatetime);
+  // Serial.print("xHandledatetime Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandlehomepage);
+  // Serial.print("xHandlehomepage Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandleLoRa);
+  // Serial.print("xHandleLoRa Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandleButton);
+  // Serial.print("xHandleButton Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandleRecmessage);
+  // Serial.print("xHandleRecmessage Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandleRGB);
+  // Serial.print("xHandleRGB Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+  // uxHighWaterMark = uxTaskGetStackHighWaterMark(xHandleSound);
+  // Serial.print("xHandleSound Task HighWaterMark: ");
+  // Serial.println(uxHighWaterMark);
+
+
+//  // Check task states periodically
+//   printTaskState(xHandlelogin, "Login Task");
+//   printTaskState(xHandleconfigdevice, "Configure Device Task");
+//   printTaskState(xHandledatetime, "DateTime Task");
+//   printTaskState(xHandlehomepage, "Homepage Task");
+//   printTaskState(xHandleLoRa, "LoRa Task");
+//   printTaskState(xHandleButton, "Button Task");
+//   printTaskState(xHandleRecmessage, "RecvMessage Task");
+//   printTaskState(xHandleRGB, "RGB Task");
+//   printTaskState(xHandleSound, "Sound Task");
+
+  delay(100);
   
 }
 

@@ -317,6 +317,7 @@
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src/FFat.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/wear_levelling/include/wear_levelling.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-cpu.h \
+ C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_system/include/esp_task_wdt.h \
  .pio/libdeps/esp32-s3-devkitm-1/Adafruit\ Unified\ Sensor/Adafruit_Sensor.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/cores/esp32/HardwareSerial.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src/HTTPUpdate.h \

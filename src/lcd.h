@@ -21,6 +21,7 @@
 #include "Audio.h"
 #include "esp32-hal-cpu.h"
 #include "freertos/semphr.h"
+#include "esp_task_wdt.h"
 #include <Adafruit_Sensor.h>
 #include <HardwareSerial.h>
 #include <HTTPUpdate.h>
@@ -117,8 +118,11 @@ void loginTask(void *parameter);
 void readeyeIcon(String temppassword, uint16_t passwordvp, uint16_t passwordIcon, uint16_t passwordDisplay);
 void connectInternet();
 void configureInternet();
+void checkInternetTask(void *parameter);
+void getGeolocation();
 void configureLogin();
 void configuredeviceTask(void *parameter);
+void configuredeviceAgain();
 void companyDetails();
 void manufactureDetails();
 void unitDetails();
@@ -138,6 +142,9 @@ bool RememberIcon(uint16_t rememberLogin);
 void showMessage(uint16_t VP_ADDRESS, String displaymessage);
 void displayFyreBoxUnitList();
 void FyreBoxUnitList();
+int readAndConvertHexString(uint16_t vp_address);
+bool isLeapYear(int year);
+int daysInMonth(int month, int year);
 
 // for LoRa Mesh 
 void LoRatask(void* parameter);
@@ -168,12 +175,14 @@ void sendActivationMessage();
 void sendDeactivationMessage();
 void rgbTask(void *parameter);
 void soundTask(void *parameter);
-void deactivateFromButton();
-void sendSMS();
+void sendNotificationSMS(void *parameter);
 
 // FOTA functions
 int FirmwareVersionCheck(void);
 void firmwareUpdate(void);
 void OTA_repeatedCall();
+
+// Function to print task state
+void printTaskState(TaskHandle_t taskHandle, const char *taskName);
 
 #endif // LCD_H
