@@ -48,7 +48,9 @@ int weekByYear = 0;
 
 // Predefined Credentials
 const String predefinedusername = "abc";
-const String predefinedPassword = "abc123";
+String predefinedPassword = "fyrebox";
+const String predefinedManufacturerdetailsPassword = "fyrebox2";
+const String predefinedCompanydetailsPassword = "fyrebox1";
 
 // Defined Values
 const String clientPanelDigits = "1101";
@@ -98,14 +100,14 @@ const String showAdmin = "1102";
 const String switchUser = "2ec";
 const String uniqueButtonDigits = "1101";
 
-const String predefinedInternetSSID = "Machadev";
-const String predefinedInternetPassword = "13060064";
+// const String predefinedInternetSSID = "Machadev";
+// const String predefinedInternetPassword = "13060064";
 // const String predefinedInternetSSID = "Redmi Note 12";
 // const String predefinedInternetPassword = "11223344";
-// const String predefinedInternetSSID = "DELL";
-// const String predefinedInternetPassword = "12345678"; 
-// const String predefinedInternetSSID = "Machadev";
-// const String predefinedInternetPassword = "Machadev321";
+const String predefinedInternetSSID = "DELL";
+const String predefinedInternetPassword = "12345678"; 
+// const String predefinedInternetSSID = "Fyrebox 4G";
+// const String predefinedInternetPassword = "Fyrebox2024";
 const String showPassword = "103";
 const String hidePassword = "102";
 
@@ -117,6 +119,8 @@ const String companyDetails_page2_next = "1102";
 const String companyDetails_page2_back = "1103";
 const String companyDetails_page3_next = "1104";
 const String companyDetails_page3_back = "1105";
+const String companyDetails_page3_skip = "1106";
+const String companyDetails_exit = "1107";
 
 const String Manufacturing_Details_Upload = "1101";
 const String Manufacturing_Details_Back = "1102";
@@ -156,12 +160,12 @@ const String Home_Screen = "1102";
 // Menu functions return key codes
 const String uploadPDF = "1103";
 const String setupUnit = "1104";
-const String supplierInfo = "1105";
-const String clientDetails = "1106";
+const String ManufacturerDetails = "1105";
+const String CompanyDetails = "1106";
 const String batteryCalculations = "1107";
 const String installationProcedure = "1108";
 const String maintenanceProcedure = "1109";
-const String weelyTesting = "110a";
+const String settings = "110a";
 const String logFault = "110b";
 const String logout = "110c";
 
@@ -176,6 +180,8 @@ const int CLIENT_PASSWORD2 = 0x51E4;
 const int CLIENT_PASSWORD_DISPLAY2 = 0x5248;
 const int CLIENT_PASSWORD_ICON = 0x31C8;
 const int CLIENT_REMEMBER_LOGIN = 0x31c9;
+
+const int PASSWORD_ICON = 0x6231;   // show/hide icon on password screen
 
 const int clientLoginStatus = 0x3000;
 const int adminLoginStatus = 0x3000;
@@ -237,6 +243,14 @@ const int VP_DEVICE_DRIVER_RETURN_KEY = 0x3e8b;
 
 const int VP_FAULT_LOGGED_BY = 0x52AC;
 const int VP_FAULT_DETAILS = 0x5310;
+
+const int VP_CURRENT_PASSWORD = 0x6431;
+const int VP_NEW_PASSWORD = 0x6531;
+const int VP_CONFIRM_NEW_PASSWORD = 0x6631;
+
+String currentPassword = "";
+String newPassword = "";
+String confirmPassword = "";
 
 const int VP_UNIT_DATE = 0x6100;
 const int VP_UNIT_TIME = 0x6000;
@@ -364,7 +378,7 @@ unsigned long lastActivityTime = 0;
 const unsigned long idleTimeout = 10000; // 10 seconds
 
 // Database Parameters
-const String getOrgId = "2";
+String getOrgId = "";
 const String deviceKey = "qTh6ltGGZzmEB";
 const String visitorOrgID = "1";
 const String visitorName = "Asher%20Sajid";
@@ -373,8 +387,10 @@ const String deviceId = "1";
 const String alertType = "1";
 const String operation = "get_devices";
 const String logInOperation = "user_login_form";
-const String userEmail = "ashiq%40gmail.com";
-const String userPassword = "abc123";
+// const String userEmail = "ashiq%40gmail.com";
+// const String userPassword = "abc123";
+String userEmail = "";
+String userPassword = "";
 
 // Manufacturer Details Parameters
 String mfr_operation = "1";
@@ -438,7 +454,7 @@ String udt_orgAddress = "Wah Cantt";
 String udt_orgStatus = "1"; 
 
 // Get Device Details
-String orgid = "2";
+String orgid = "";
 String getOperation = "get_devices";
 
 // Base Url
@@ -446,7 +462,7 @@ const String getOrgBaseUrl = "https://fyreboxhub.com/api/get_org_details.php?org
 const String getDeviceBaseUrl = "https://fyreboxhub.com/api/get_device_checklists.php?device_key=";
 const String addVisitorBaseUrl = "https://fyreboxhub.com/api/add_visitor.php?";
 const String AlertBaseUrl = "https://fyreboxhub.com/api/create_alert.php?";
-const String getDataBaseUrl = "https://fyreboxhub.com/api/get_data.php?";
+String getDataBaseUrl = "https://fyreboxhub.com/api/get_data.php?";
 const String loginBaseUrl = "https://fyreboxhub.com/api/get_data.php?";
 
 // Set Base Url
@@ -464,12 +480,13 @@ const String manufacturerBaseUrl = "https://fyreboxhub.com/api/set_data.php?";
 
 
 // Complete get Url
-const String logInDetailsUrl = loginBaseUrl + "operation=" + logInOperation + "&user_email=" + userEmail + "&user_password=" + userPassword;
-const String getOrgDetailsUrl = getOrgBaseUrl + getOrgId;
+String logInDetailsUrl = loginBaseUrl + "operation=" + logInOperation + "&user_email=" + userEmail + "&user_password=" + userPassword;
+String getOrgDetailsUrl = getOrgBaseUrl + getOrgId;
 const String getDeviceChecklistsUrl = getDeviceBaseUrl + deviceKey;
 const String addVisitorUrl = addVisitorBaseUrl + "org_id=" + visitorOrgID + "&name=" + visitorName + "&phone=" + visitoprPhone;
 const String createAlertUrl = AlertBaseUrl + "device_id=" + deviceId + "&alert_type=" + alertType;
-const String devicesDetailsUrl = getDataBaseUrl + "operation=" + getOperation + "&org_id=" + orgid;
+String devicesDetailsUrl = getDataBaseUrl + "operation=" + getOperation + "&org_id=" + orgid;
+        // Complete get devicesDetailsUrl https://fyreboxhub.com/api/get_data.php?+operation=get_devices+&org_id=15
 
 // Define Page Number
 const int FYREBOXLOGO = 0x0000;
@@ -484,7 +501,7 @@ const int COMPANY_DETAILS_PAGE3 = 0x0009;
 const int COMPANY_DETAIL_AUTO_LOAD = 0x000A;
 const int COMPANY_UNIT_DETAILS = 0x000D;
 const int COMPANY_MANUFACTURE_DETAILS = 0x000E;
-const int DEVICE_DIRECTION_DETAILS_PAGE = 0x0010;
+const int DEVICE_DIRECTION_DETAILS_PAGE = 0x000F;
 const int DEVICE_CONFIGURED_SUCCESSFULLY = 0x0014;
 const int UNITSLISTS_PAGE = 0x0015;
 const int HOME_PAGE = 0x001A;
@@ -496,9 +513,11 @@ const int CHECKLISTPAGE5 = 0x001F;
 const int SHOW_REPORT_PAGE = 0x0020;
 const int MENU_PAGE = 0x0025;
 const int NOTIFICATION_PAGE = 0x0018;
+const int SITE_EVACUATION_PAGE = 0x003A;
 const int LOCALMAP_PAGE = 0x002A; 
 const int SITEMAP_PAGE = 0x0016; 
 const int EVACUATION_PROCEDURE_PAGE = 0x0017;
+const int HAND_GESTURES_PAGE = 0X0035;
 const int CLIENT_LOGO_BROLL = 0x002B;
 const int CLIENT_LOGO_SUN = 0x002C;
 const int CLIENT_LOGO_SERVEST = 0x002D;
@@ -506,13 +525,17 @@ const int PASSWORD_PAGE = 0x002E;
 const int BATTERYLOW_PAGE = 0x002F;
 const int BATTERY_CALC_PAGE = 0x0026;
 const int LOGAFAULT_PAGE = 0x0033;
-const int SUPPLIER_INFO_PAGE = 0x0034;
-const int CLIENT_DETAILS_PAGE = 0x0035;
+const int UPDATE_DATE_TIME_PAGE = 0x0034;
 const int INSTALLATION_PROCEDURE_PAGE = 0x0036;
-const int MAINTENANCE_PROCEDURE_PAGE = 0x0037;
-const int UPDATE_DATE_TIME_PAGE = 0x0038;
+const int MAINTENANCE_PROCEDURE_PAGE = 0x003D;
+const int SETTINGS_PAGE = 0x0043;
+const int CHANGE_PASSWORD_PAGE = 0x003B;
+const int FACTORY_RESET_PAGE = 0x003C;
+const int UPDATE_DATE_TIME_YES_NO_PAGE = 0x0044;
+const int NEW_LOGO = 0x0045;
 
 // Flags
+bool copyrightAcceptedflag = false;
 bool clientLogin = false;
 bool adminLogin = false;
 bool rememberClient = false;
@@ -535,6 +558,9 @@ bool APIresponseFlag = false;
 bool companyManufacturerDetailsBack = false;
 bool unitDetailsBack = false;
 bool ArrowDetailsBack = false;
+bool arrowDirection = false;
+bool loggedIn = false;
+bool deviceConfiguredFlag = false;
 
 // // RX and TX of GPS
 const int GPSRXPin = 10;  // ESP32 GPIO 5 for RX
@@ -554,10 +580,10 @@ const int SIGPIN = 5;
 // Pins for LoRa Mesh
 const int MOPIN = 39;
 const int M1PIN = 38;
-const int AUXPIN = 26;
+const int AUXPIN = 3;
 // const int NODEID = 1; // sun
 // const int NODEID = 2; // servest
-const int NODEID = 3; // broll
+int NODEID = 3; // broll
 
 // variables to keep track of each node
 int totalNodes = 0;
@@ -689,19 +715,20 @@ bool activateSoundflag = false;
 bool deactivate = false;
 bool sendSMSflag = false;
 bool batterysaverflag = false;
+bool printDebug = false;
 
 // For sms 
 // Your Domain name with URL path or IP address with path
 String serverName = "https://api.sms.to/sms/send";
+
+const int numRecipients = 5;
 const char* recipients[] = {
-    // "+27826450230", // Recipient 1 (South Africa)
-    "+2782XXXXXXX",   // Recipient 1 (South Africa)
-    "+923015921906", // Recipient 2 (Pakistan)
+    "+2782XXXXXXX", // Recipient 1 (South Africa)
+    "+2782XXXXXXX", // Recipient 2 (South Africa)
     "+2782XXXXXXX",  // Recipient 3 (South Africa)
     "+2782XXXXXXX", // Recipient 4 (South Africa)
     "+2782XXXXXXX"   // Recipient 5 (South Africa)
 };
-const int numRecipients = 5;
 
 // For FOTA
 String FirmwareVer = {"1.1"}; //Current Firmware version
@@ -709,7 +736,3 @@ unsigned long OTA_previousMillis = 0;
 const long OTA_interval = 60000; //Interval for checking OTA
 String URL_fw_Version = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/firmware_version.txt";
 String URL_fw_Bin = "https://raw.githubusercontent.com/machadevrepos/FRS-FyreBox-Node/main/.pio/build/esp32-s3-devkitm-1/firmware.bin";
-
-
-// For geolocation
-const char* googleApiKey = "your_google_geolocation_api_key";

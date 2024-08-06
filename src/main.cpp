@@ -67,25 +67,56 @@ FyreBox Node:
 - LoRa Module: Connected at IO35 (RX) and IO36 (TX) using software serial.
 - SD Card Connection: The SIG pin must be HIGH (IO5) for the SD card to connect with the DWIN LCD.
 
+- Added Firmware update Over-The-Air (FOTA) in FyreBox Node
+- Update the firmware version number in the `FirmwareVer` constant in the `constant.cpp` file and in the `firmware_version.txt` file, 
+- then compile/build the firmware then push the changes to the `FRS-FyreBox-Node` public repository owned by `machadevrepos`.
+- The node then downloads the latest version from GitHub, uploads it to the ESP32, and reboots. This process takes 1 to 2 minutes.
+
 TODO:
 
   - Activate screen saver slide show after 6 sec of inactivity
+  - Get date time from internet 
+  - Must be able to activate evacuation procedure using switch from anywhere in the screen (Independant from screen)
+  - Must be able to activate and deactivate from any screen
+  - ⁠Menus bar must be completed on the GUI- each tab i.e. Battery calculations maintenance and installation procedure etc
+  - The Fire depatment contact number. An SMS must only be sent to that number when two units have been activated.
+  - Give the client an option on the GUI when he puts that number in if it should send the notication when one unit or two units are activated
+  - N.B Internal nodes a problem (same node number) IP Address?? When a box is activated it resets the other boxes on the network ****
 
 DONE:
 
-  - Added Firmware update Over-The-Air (FOTA) in FyreBox Node
-  - Update the firmware version number in the `FirmwareVer` constant in the `constant.cpp` file and in the `firmware_version.txt` file, 
-  - then compile/build the firmware then push the changes to the `FRS-FyreBox-Node` public repository owned by `machadevrepos`.
-  - The node then downloads the latest version from GitHub, uploads it to the ESP32, and reboots. This process takes 1 to 2 minutes.
+  - Update site informtion company detail screens
+  - Update date and time screen
+  - Add installation procedure screens
+  - Add yes or no screen upon activation
+  - Add sign language screen  
+  - Upon Activation of the Fyrebox, the site map should be displayed for a duration of 8 seconds during the bell sound. 
+    When the Fyrebox unit announces "ATTENTION", the sign language image should be displayed for 8 seconds. 
+    And lastly when the Fyrebox unit announces "EMERGENCY", the emergency procedure image should be displayed for 8 seconds.
+
+  - Reassign VP addresses of icon display in show/hide password
+  - Replace supplier information with Manufacturer details
+  - Replace client details with company details
+  - Remove upload pdf
+  - Remove setup unit
+  - Remove weekly testing
+  - Add settings button
+  - Add factory reset button
+
+  - Design screen for settings 
+  - Design screen for factory reset
+  - Change font colour to white
+
+  - updated maintenance procedure, settings, wifi and unique key screens
+  - integrated confirmation screen for time and date update for all units
+  - Added password protection for manufacturer and company details in menu bar
+  - Added WiFi, battery and device configured icon just for testing
 
 EXTRA:
 
-  - 24 X LEDs for each of the sides - so 24x 2 (each side). Always on in white. Activation, flashing red. (48 total)
-  - 3  X LEDS for the big hexagon (always on in white) always on (3 total)
-  - 12  X LEDS small hexagon (always on, always white) activation flashing red, same as the sides. (12 total)
-  - 3 X LEDs per arrow (6 in total for both arrows) white normally then on activation the directional arrow turns red and runs (6 total)
-  - 18 X LEDs for the alarm call point sign - always white, always on (18 total)
-  - 24 X LEDs for the FIRE sign (always RED, always on. flashing red on activation) (24 total)
+  - DWIN LCD datasheet page not found
+  - Used ESP32 s3 not ESP32U
+  - GPS not used
 
 */
 
@@ -104,55 +135,47 @@ SoftwareSerial LoRaSerial(LORA_TX_PIN, LORA_RX_PIN); // ESP32(RX), ESP32(TX)
 
 // Setup Function: Call Once when Code Starts
 void setup() {
-  Serial.begin(115200); // Start the Serial Communication with PC 
-  Serial.println("Debug Serial is ready.");
+  Serial.begin(BAUD_RATE_SERIAL); // Start the Serial Communication with PC 
+  enableDebugging();  // Uncomment this line to enable helpful debug messages on Serial
+  if (printDebug) {
+    Serial.println("Debug Serial is ready.");
 
-  Serial.println("NODEID: " + String(NODEID));
+    Serial.println("NODEID: " + String(NODEID));
 
-  Serial.println("Active Firmware version: " + FirmwareVer);
+    Serial.println("Active Firmware version: " + FirmwareVer);
+  }
 
-  Serial1.begin(115200, SERIAL_8N1, DWIN_TX_PIN, DWIN_RX_PIN); // Start the Serial Communication with DWIN LCD 
-  Serial.println("Serial1 is ready.");
+  Serial1.begin(BAUD_RATE_DWIN, SERIAL_8N1, DWIN_TX_PIN, DWIN_RX_PIN); // Start the Serial Communication with DWIN LCD 
+  if (printDebug) Serial.println("Serial1 is ready.");
 
-  LoRaSerial.begin(9600); // Start the Serial Communication with LoRa module
-  Serial.println("LoRaSerial is ready.");
+  LoRaSerial.begin(BAUD_RATE_LORA); // Start the Serial Communication with LoRa module
+  if (printDebug) Serial.println("LoRaSerial is ready.");
 
   // Init driver(LoRa E32) and mesh manager
-  Serial.println("Initializing mesh");
+  if (printDebug) Serial.println("Initializing mesh");
   while(! initializeMESH()){  // stays in a loop until LoRa found 
-    Serial.println("Mesh initialization failed");
-    Serial.println("Retyring...");
+    if (printDebug) {
+        Serial.println("Mesh initialization failed");
+        Serial.println("Retyring...");
+    }
     delay(3000);
-   }
-  Serial.println("Mesh initialized successfully.");
+  }
+  if (printDebug) Serial.println("Mesh initialized successfully.");
 
   // RTC pins for ESP32-S3-Mini
   Wire.begin(RTC_SDA, RTC_SCL);
   delay(5);
 
   // Mandatory for gps task
-  Serial.println("Initializing RTC");
+  if (printDebug) Serial.println("Initializing RTC");
   while (!rtc.begin()){ // stays in a loop until RTC found 
-    Serial.println("Couldn't find RTC");
-    Serial.println("Retyring...");
+    if (printDebug) {
+        Serial.println("Couldn't find RTC");
+        Serial.println("Retyring...");
+    }
     delay(3000);
   }
-  Serial.println("RTC Initialized.");
-
-  // // Get the chip ID
-  // uint32_t chipId = ESP.getEfuseMac() & 0xFFFFFF; // Truncate to get a 24-bit unique ID
-
-  // Serial.print("Unique Device ID: ");
-  // Serial.println(chipId);
-
-  // // Get the MAC address
-  // String macAddress = WiFi.macAddress();
-
-  // Serial.print("MAC Address: ");
-  // Serial.println(macAddress);
-
-  // This line sets date and time on RTC (year, month, date, hour, min, sec)
-  // rtc.adjust(DateTime(2024, 6, 24, 15, 06, 0));
+  if (printDebug) Serial.println("RTC Initialized.");
 
   setupLeds(); // Led Setup
   
@@ -161,11 +184,13 @@ void setup() {
   // SIG pin must be HIGH for the sdcard to connect with the DWIN LCD
   pinMode(SIGPIN, OUTPUT); // Declare signal pin as output
   // digitalWrite(SIGPIN, HIGH); // commented to connect sd card with ESP32 
+  // systemReset(); // testing DWIN LCD to download files
 
   pinMode(siteEvacuation_buttonPin, INPUT_PULLUP); // Declare button pin as input and enable internal pull up
 
   EEPROM.begin(512); // Initialize EEPROM
   preferences.begin("credentials", false); // Open Preferences with "credentials" namespace
+  preferences.begin("configuration", false); // Open Preferences with "configuration" namespace
   delay(5);
 
   // SD card configuration
@@ -177,7 +202,7 @@ void setup() {
   // initAudio(); // initialize audio
 
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-  audio.setVolume(19);                     // default 0...21
+  audio.setVolume(16);                     // default 0...21
 
   setCpuFrequencyMhz(240);
   audioSemaphore = xSemaphoreCreateBinary(); 
@@ -205,7 +230,7 @@ void setup() {
 
   // To handle button activation and deactivation
   xTaskCreate(buttonTask, "buttonTask", 3072, NULL, 8, &xHandleButton);
-  vTaskSuspend(xHandleButton);
+  // vTaskSuspend(xHandleButton);
 
   // To receive messages on LoRa
   xTaskCreate(RecvMessageTask, "RecvMessageTask", 2048, NULL, 8, &xHandleRecmessage);
@@ -215,79 +240,19 @@ void setup() {
   xTaskCreate(checkInternetTask, "Check Internet Task", 4096, NULL, 1, &xHandlewifi);
   vTaskSuspend(xHandlewifi);
 
-  // // To run leds in infinite loop upon activation
-  // xTaskCreate(rgbTask, "rgbTask", 10000, NULL, 9, &xHandleRGB);
-  // vTaskSuspend(xHandleRGB);
+  // reset_allText();
 
-  // // To play audio and siren bell in infinite loop upon activation
-  // xTaskCreate(soundTask, "soundTask", 10000, NULL, 9, &xHandleSound);
-  // vTaskSuspend(xHandleSound);
-
-  // xTaskCreate(checkGPSTask, "CheckGPS", 2048, NULL, 1, &xHandlegps);
-  // vTaskSuspend(xHandlegps);
-
-
-  // resetVP(CLIENT_SSID);
-  resetVP(VP_UNIT_DATE);
-  resetVP(VP_UNIT_TIME);
-  // resetVP(CLIENT_PASSWORD);
-  resetVP(CLIENT_PASSWORD_DISPLAY);
-  // resetVP(ADMIN_SSID);
-  // resetVP(ADMIN_PASSWORD);
-  resetVP(ADMIN_PASSWORD_DISPLAY);
-  resetVP(clientLoginStatus);
-  resetVP(adminLoginStatus);
-  resetVP(INTERNET_SSID);
-  // resetVP(INTERNET_PASSWORD);
-  resetVP(INTERNET_PASSWORD_DISPLAY);
-  // resetVP(INTERNET_PASSWORD_ICON);
-  resetVP(INTERNET_CONNECT_BUTTON);
-  resetVP(UNIQUE_KEY_OKAY_BUTTON);
-  resetVP(UNIQUE_KEY);
-  delay(10);
-  sendWriteCommand(LOGIN, RESET);
-  resetVP(COMPANY_DONE_BUTTON_ADDRESS);
-  resetVP(VP_DEVICE_DRIVER_RETURN_KEY);
-  resetVP(VP_COMPANY_NAME);
-  resetVP(VP_COMPANY_ADDRESS);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON_NAME);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON_CONTACT);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON1_NAME);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON1_CONTACT);
-  resetVP(VP_AUTO_UPLOAD_COMPANY_DETAILS);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON2_NAME);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON2_CONTACT);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON3_NAME);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON3_CONTACT);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON4_NAME);
-  resetVP(VP_KEY_RESPONSIBLE_PERSON4_CONTACT);
-  resetVP(VP_LOCAL_FIRE_DEPARTMENT_NAME);
-  resetVP(VP_LOCAL_FIRE_DEPARTMENT_CONTACT);
-  resetVP(VP_MANUFACTURING_DETAILS);
-  resetVP(VP_MANUFACTURE_NAME);
-  resetVP(VP_MANUFACTURE_CONTACT);
-  resetVP(VP_MANUFACTURE_EMAIL);
-  resetVP(VP_MANUFACTURE_DATE);
-  resetVP(VP_MANUFACTURE_SERIAL_N0);
-  resetVP(VP_UNIT_DONE);
-  resetVP(VP_LOCATION_OF_UNIT);
-  resetVP(VP_ASSIGNED_UNIT_NUMBER);
-  resetVP(VP_DATE_OF_UNIT_INSTALLATION);
-  resetVP(VP_UNIT_INSTALLER);
-  resetVP(VP_UNIT_CONTACT_DETAILS);
-  resetVP(VP_UNIT_IP_ADDRESS);
-  resetVP(VP_DEVICE_DRIVER_RETURN_KEY);
-  resetVP(notificationStatus1);
-  resetVP(notificationStatus2);
-  resetVP(notificationStatus3);
-  resetVP(notificationStatus4);
   delay(50);
 
-// commented only for testing
-  // pageSwitch(COPYRIGHT); // Switch to Copyright Page
-  // Serial.println("Page Switched");
-  // delay(5);
+  // preferences.putBool("configuration", deviceConfiguredFlag); // only for testing
 
+  deviceConfiguredFlag = preferences.getBool("configuration", false); 
+
+  if (!deviceConfiguredFlag) {
+    pageSwitch(COPYRIGHT); // Switch to Copyright Page
+    if (printDebug) Serial.println("COPYRIGHT");
+    delay(5);
+  }
 }
 
 // Run Code in Loop

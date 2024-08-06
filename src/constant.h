@@ -12,8 +12,9 @@
 #include <Arduino.h>
 
 // Baud Rates
-// #define Baud_RATE_SERIAL  9600
-// #define Baud_RATE_DISPLAY  9600
+#define BAUD_RATE_SERIAL    115200
+#define BAUD_RATE_DWIN   115200
+#define BAUD_RATE_LORA      9600
 
 extern TaskHandle_t xHandleButton;
 extern TaskHandle_t xHandleRecmessage;
@@ -55,7 +56,9 @@ extern int weekByYear;
 
 // Predefined Credentials
 extern const String predefinedusername;
-extern const String predefinedPassword;
+extern String predefinedPassword;
+extern const String predefinedManufacturerdetailsPassword;
+extern const String predefinedCompanydetailsPassword;
 
 // Defined Values
 extern const String clientPanelDigits;
@@ -90,6 +93,8 @@ extern const String companyDetails_page2_next;
 extern const String companyDetails_page2_back;
 extern const String companyDetails_page3_next;
 extern const String companyDetails_page3_back;
+extern const String companyDetails_page3_skip;
+extern const String companyDetails_exit;
 
 extern const int COMPANY_MANUFACTURE_DETAILS;
 extern const String Manufacturing_Details_Upload;
@@ -148,12 +153,12 @@ extern const String Home_Screen;
 // Menu functions
 extern const String uploadPDF;
 extern const String setupUnit;
-extern const String supplierInfo;
-extern const String clientDetails;
+extern const String ManufacturerDetails;
+extern const String CompanyDetails;
 extern const String batteryCalculations;
 extern const String installationProcedure;
 extern const String maintenanceProcedure;
-extern const String weelyTesting;
+extern const String settings;
 extern const String logFault;
 extern const String logout;
 
@@ -168,6 +173,7 @@ extern const int CLIENT_PASSWORD2;
 extern const int ADMIN_SSID;
 extern const int ADMIN_PASSWORD;
 extern const int LOGIN;
+extern const int PASSWORD_ICON;
 
 extern const int COPYRIGHT;
 extern const int checkboxVP;
@@ -258,9 +264,11 @@ extern const int CHECKLISTPAGE5;
 extern const int CLIENTPAGE;
 extern const int ADMINPAGE;
 extern const int NOTIFICATION_PAGE;
+extern const int SITE_EVACUATION_PAGE;
 extern const int LOCALMAP_PAGE; 
 extern const int SITEMAP_PAGE;
 extern const int EVACUATION_PROCEDURE_PAGE;
+extern const int HAND_GESTURES_PAGE;
 extern const int FYREBOXLOGO;
 extern const int CLIENT_LOGO_BROLL;
 extern const int CLIENT_LOGO_SUN;
@@ -269,14 +277,25 @@ extern const int PASSWORD_PAGE;
 extern const int BATTERYLOW_PAGE;
 extern const int BATTERY_CALC_PAGE;
 extern const int LOGAFAULT_PAGE;
-extern const int SUPPLIER_INFO_PAGE;
-extern const int CLIENT_DETAILS_PAGE;
+extern const int UPDATE_DATE_TIME_PAGE;
 extern const int INSTALLATION_PROCEDURE_PAGE;
 extern const int MAINTENANCE_PROCEDURE_PAGE;
-extern const int UPDATE_DATE_TIME_PAGE;
+extern const int SETTINGS_PAGE;
+extern const int CHANGE_PASSWORD_PAGE;
+extern const int FACTORY_RESET_PAGE;
+extern const int UPDATE_DATE_TIME_YES_NO_PAGE;
+extern const int NEW_LOGO;
 
 extern const int VP_FAULT_LOGGED_BY;
 extern const int VP_FAULT_DETAILS;
+
+extern const int VP_CURRENT_PASSWORD;
+extern const int VP_NEW_PASSWORD;
+extern const int VP_CONFIRM_NEW_PASSWORD;
+
+extern String currentPassword;
+extern String newPassword;
+extern String confirmPassword;
 
 extern const int VP_UNIT_DATE;
 extern const int VP_UNIT_TIME;
@@ -403,6 +422,7 @@ extern unsigned long lastActivityTime;
 extern const unsigned long idleTimeout;
 
 // Flags
+extern bool copyrightAcceptedflag;
 extern bool clientLogin;
 extern bool adminLogin;
 extern bool rememberClient;
@@ -425,9 +445,12 @@ extern bool APIresponseFlag;
 extern bool companyManufacturerDetailsBack;
 extern bool unitDetailsBack;
 extern bool ArrowDetailsBack;
+extern bool arrowDirection;
+extern bool loggedIn;
+extern bool deviceConfiguredFlag;
 
 // Database Parameters
-extern const String getOrgId;
+extern String getOrgId;
 extern const String deviceKey;
 extern const String visitorOrgID;
 extern const String visitorName;
@@ -436,8 +459,8 @@ extern const String deviceId;
 extern const String alertType;
 extern const String operation;
 extern const String logInOperation;
-extern const String userEmail;
-extern const String userPassword;
+extern String userEmail;
+extern String userPassword;
 
 // Manufacturer Details Parameters
 extern String mfr_operation;
@@ -509,16 +532,16 @@ extern const String getOrgBaseUrl;
 extern const String getDeviceBaseUrl;
 extern const String addVisitorBaseUrl;
 extern const String AlertBaseUrl;
-extern const String getDataBaseUrl;
+extern String getDataBaseUrl;
 extern const String loginBaseUrl;
 
 // Complete Url
-extern const String logInDetailsUrl;
-extern const String getOrgDetailsUrl;
+extern String logInDetailsUrl;
+extern String getOrgDetailsUrl;
 extern const String getDeviceChecklistsUrl;
 extern const String addVisitorUrl;
 extern const String createAlertUrl;
-extern const String devicesDetailsUrl;
+extern String devicesDetailsUrl;
 
 // Set Base Url
 extern const String manufacturerBaseUrl;
@@ -554,7 +577,7 @@ extern const int SIGPIN;
 extern const int MOPIN;
 extern const int M1PIN;
 extern const int AUXPIN;
-extern const int NODEID;
+extern int NODEID;
 // variables to keep track of each node
 extern int totalNodes;
 extern int activeNodes;
@@ -613,7 +636,7 @@ extern const String ReturnKeyCode_Inactive_Next;
 extern const String ReturnKeyCode_Inactive_Prev;
 
 // LED configuration
-#define DATA_PIN_RGB1 26 // used for aux pin 
+#define DATA_PIN_RGB1 26 
 #define DATA_PIN_RGB2 47
 #define DATA_PIN_RGB3 33
 #define DATA_PIN_RGB4 34
@@ -664,10 +687,12 @@ extern bool activateSoundflag;
 extern bool deactivate;
 extern bool sendSMSflag;
 extern bool batterysaverflag;
+extern bool printDebug;
 
 extern String serverName;
-extern const char* recipients[];
 extern const int numRecipients;
+extern const char* recipients[];
+// extern char recipients[];
 
 // For FOTA
 extern String FirmwareVer; //Current Firmware version
@@ -675,8 +700,5 @@ extern unsigned long OTA_previousMillis;  // will store last time Firmware updat
 extern const long OTA_interval; //Interval for checking OTA
 extern String URL_fw_Version;
 extern String URL_fw_Bin;
-
-// For geolocation
-extern const char* googleApiKey;
 
 #endif // CONSTANTS_H
