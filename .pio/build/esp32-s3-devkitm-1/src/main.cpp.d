@@ -325,9 +325,11 @@
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/libraries/Update/src/Update.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/cores/esp32/MD5Builder.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_rom/include/esp_rom_md5.h \
- src/OTA_cert.h lib/RadioHead/RH_E32.h lib/RadioHead/RHGenericDriver.h \
- lib/RadioHead/RadioHead.h lib/RadioHead/RHMesh.h \
- lib/RadioHead/RHRouter.h lib/RadioHead/RHReliableDatagram.h \
- lib/RadioHead/RHDatagram.h src/constant.h \
+ src/OTA_cert.h .pio/libdeps/esp32-s3-devkitm-1/ESP32Ping/ESP32Ping.h \
+ .pio/libdeps/esp32-s3-devkitm-1/ESP32Ping/ping.h lib/RadioHead/RH_E32.h \
+ lib/RadioHead/RHGenericDriver.h lib/RadioHead/RadioHead.h \
+ lib/RadioHead/RHMesh.h lib/RadioHead/RHRouter.h \
+ lib/RadioHead/RHReliableDatagram.h lib/RadioHead/RHDatagram.h \
+ src/constant.h \
  C:/Users/DELL/.platformio/packages/framework-arduinoespressif32/libraries/EEPROM/src/EEPROM.h \
  src/OTA_cert.h

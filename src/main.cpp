@@ -189,8 +189,9 @@ void setup() {
   pinMode(siteEvacuation_buttonPin, INPUT_PULLUP); // Declare button pin as input and enable internal pull up
 
   EEPROM.begin(512); // Initialize EEPROM
-  preferences.begin("credentials", false); // Open Preferences with "credentials" namespace
-  preferences.begin("configuration", false); // Open Preferences with "configuration" namespace
+  preferences.begin("Fyrebox", false); // Open Preferences with "credentials" namespace
+  // preferences.begin("configuration", false); // Open Preferences with "configuration" namespace
+  // preferences.begin("id", false); // Open Preferences with "deviceid" namespace
   delay(5);
 
   // SD card configuration
@@ -199,10 +200,7 @@ void setup() {
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
   SD.begin(SD_CS);
 
-  // initAudio(); // initialize audio
-
-  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-  audio.setVolume(16);                     // default 0...21
+  initAudio(); // initialize audio
 
   setCpuFrequencyMhz(240);
   audioSemaphore = xSemaphoreCreateBinary(); 

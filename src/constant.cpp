@@ -59,7 +59,7 @@ const String adminPanelDigits = "1102";
 String internetSSID = "";
 String internetPassword = "";
 
-String storedUniqueData = "";
+String getDeviceKey = "";
 
 String companyName = "";
 String companyAddress = "";
@@ -375,7 +375,7 @@ const int Prev_page5 = 65;
 
 // RTC
 unsigned long lastActivityTime = 0;
-const unsigned long idleTimeout = 10000; // 10 seconds
+const unsigned long idleTimeout = 60000; // 60 seconds
 
 // Database Parameters
 String getOrgId = "";
@@ -482,6 +482,7 @@ const String manufacturerBaseUrl = "https://fyreboxhub.com/api/set_data.php?";
 // Complete get Url
 String logInDetailsUrl = loginBaseUrl + "operation=" + logInOperation + "&user_email=" + userEmail + "&user_password=" + userPassword;
 String getOrgDetailsUrl = getOrgBaseUrl + getOrgId;
+// https://fyreboxhub.com/api/get_org_details.php?org_id=15
 const String getDeviceChecklistsUrl = getDeviceBaseUrl + deviceKey;
 const String addVisitorUrl = addVisitorBaseUrl + "org_id=" + visitorOrgID + "&name=" + visitorName + "&phone=" + visitoprPhone;
 const String createAlertUrl = AlertBaseUrl + "device_id=" + deviceId + "&alert_type=" + alertType;

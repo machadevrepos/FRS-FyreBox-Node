@@ -67,7 +67,7 @@ extern const String adminPanelDigits;
 extern String internetSSID;
 extern String internetPassword;
 
-extern String storedUniqueData;
+extern String getDeviceKey;
 
 extern const String showPassword;
 extern const String hidePassword;

@@ -27,6 +27,7 @@
 #include <HTTPUpdate.h>
 #include <WiFiClientSecure.h>
 #include "OTA_cert.h"
+#include <ESP32Ping.h>
 
 // For LoRa Mesh networking
 #include <RH_E32.h>
@@ -60,6 +61,7 @@ struct NodeStatus {
 
 void reset_allText();
 void enableDebugging();
+void discardMessage();
 void readData();
 void checkVersion();
 void sendReadCommand(uint16_t address, uint16_t data_length);
@@ -114,8 +116,9 @@ String extractKeycode(const String &input);
 String extractPageVP(const String &input, const String &vpAddressPattern);
 String concatinate_checkboxData();
 bool isActivityDetected();
+bool verifyLogin(const String& loginUrl);
+bool verifyDeviceInOrganization(const String& orgDetailsUrl, const String& targetDeviceId);
 String getResponse(String url);
-String getorg_ID(String url);
 int getWeekNumberByMonth(int day, int month, int year);
 int getWeekNumberByYear(int day, int month, int year);
 void checkGPSTask(void *parameter);
